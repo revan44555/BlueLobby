@@ -46,3 +46,22 @@ Yerel doğrulama: `dotnet build -c Release -p:EnableWindowsTargeting=true` başa
 - **Derleme:** ana proje 0 hata/0 uyarı; testler 7/7 PASS.
 
 Yerel test: ana projeyi Release derleyip `dotnet run --project Tests` .
+
+
+---
+
+# Arayuz yenileme (v2.2 gorunum)
+
+- Sol menu navigasyonu: Oyun / Arkadaslar / Ayarlar / Gelismis (log).
+- Terminal benzeri log artik varsayilan olarak GIZLI; "Gelismis / Log" menuden acilir. HATA olunca otomatik o bolume gecilir.
+- Mavi maskot sol altta kart icinde; ayarlardan kapatilabilir.
+- Radmin VPN bulunamazsa banner'da "Resmi Siteden Indir" butonu (radmin-vpn.com) + standart ayar butonu.
+
+
+---
+
+# Emulator otomasyonu (Ara ve Kopyala)
+
+- Durum kartinda emulator satiri: 🟢 hazir / 🟡 bekleniyor (dil destekli).
+- "Emulatoru Ara ve Kopyala" butonu: Indirilenler + Masaustu + Belgeler icinde steam_api64.dll / steam_api.dll arar, bulunca onay ister ve EXE yanina kopyalar.
+- Bulunamazsa dosya secme penceresi acilir; ayni klasordeki ikinci dosya da otomatik yakalanir.

@@ -96,7 +96,7 @@ namespace SteamLANControlCenter
 
         private void ApplyMascotVisibility(bool show)
         {
-            TxtMascot.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            MascotCard.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
             if (show)
             {
                 StartMascotBounce();
@@ -117,6 +117,190 @@ namespace SteamLANControlCenter
         {
             string tip = Loc.T("mascot_tip") + "\n\n1) Klasörü seç ya da sürükle\n2) Fix'e bas\n3) Takılırsan loga bak";
             MessageBox.Show(this, tip, "Mavi 🤖", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // ===================== Navigasyon =====================
+
+        private void Nav_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string section)
+            {
+                SetSection(section);
+            }
+        }
+
+        private void SetSection(string section)
+        {
+            SectionGame.Visibility = section == "game" ? Visibility.Visible : Visibility.Collapsed;
+            SectionFriends.Visibility = section == "friends" ? Visibility.Visible : Visibility.Collapsed;
+            SectionSettings.Visibility = section == "settings" ? Visibility.Visible : Visibility.Collapsed;
+            SectionLog.Visibility = section == "log" ? Visibility.Visible : Visibility.Collapsed;
+
+            HighlightNav(NavOyun, section == "game");
+            HighlightNav(NavFriends, section == "friends");
+            HighlightNav(NavSettings, section == "settings");
+            HighlightNav(NavLog, section == "log");
+        }
+
+        private void HighlightNav(Button button, bool active)
+        {
+            button.Background = active ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#45475a")) : Brushes.Transparent;
+            button.FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal;
+        }
+
+        private void BtnDownloadRadmin_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = "https://www.radmin-vpn.com/", UseShellExecute = true });
+                Log("🌐 Radmin VPN resmi sitesi açıldı. Kurulumdan sonra program yeniden başlatılınca algılanır.");
+            }
+            catch (Exception ex)
+            {
+                Log($"⚠️ Site açılamadı: {ex.Message} — adres: https://www.radmin-vpn.com/");
+            }
+        }
+
+        // ===================== Emülatör Ara ve Kopyala =====================
+
+        private async void BtnFindEmulator_Click(object sender, RoutedEventArgs e)
+        {
+            ReportProgress(-1, "Bilgisayarda emülatör dosyaları aranıyor...");
+            try
+            {
+                string[] names = { "steam_api64.dll", "steam_api.dll" };
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+                var searchRoots = new List<string>();
+                string? userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                if (!string.IsNullOrWhiteSpace(userProfile))
+                {
+                    searchRoots.Add(Path.Combine(userProfile, "Downloads"));
+                    searchRoots.Add(Path.Combine(userProfile, "Desktop"));
+                    searchRoots.Add(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+                }
+
+                var found = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                await Task.Run(() =>
+                {
+                    foreach (string root in searchRoots.Where(Directory.Exists))
+                    {
+                        var opts = new EnumerationOptions
+                        {
+                            RecurseSubdirectories = true,
+                            IgnoreInaccessible = true,
+                            MatchCasing = MatchCasing.CaseInsensitive,
+                            MaxRecursionDepth = 6
+                        };
+
+                        foreach (string name in names)
+                        {
+                            if (found.ContainsKey(name))
+                            {
+                                continue;
+                            }
+
+                            try
+                            {
+                                string? hit = Directory.GetFiles(root, name, opts).FirstOrDefault();
+                                if (hit != null)
+                                {
+                                    lock (found)
+                                    {
+                                        found.TryAdd(name, hit);
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // erişilemeyen klasörleri atla
+                            }
+                        }
+
+                        if (found.Count == names.Length)
+                        {
+                            break;
+                        }
+                    }
+                });
+
+                if (found.Count == 0)
+                {
+                    // Elle seçtir
+                    ShowProgress(false);
+                    var ofd = new OpenFileDialog
+                    {
+                        Filter = "Emülatör DLL|steam_api64.dll;steam_api.dll",
+                        Title = "steam_api64.dll dosyasını seçin"
+                    };
+
+                    if (ofd.ShowDialog() == true)
+                    {
+                        found[Path.GetFileName(ofd.FileName)] = ofd.FileName;
+                        string? sibling = names.FirstOrDefault(n => !found.ContainsKey(n));
+                        if (sibling != null)
+                        {
+                            string candidate = Path.Combine(Path.GetDirectoryName(ofd.FileName) ?? string.Empty, sibling);
+                            if (File.Exists(candidate))
+                            {
+                                found[sibling] = candidate;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Log("Arama yapılmadı; kullanıcı vazgeçti.");
+                        return;
+                    }
+                }
+
+                ShowProgress(false);
+
+                if (found.Count == 0)
+                {
+                    MessageBox.Show(
+                        this,
+                        "Dosyalar bulunamadı.\n\nİndirdiğiniz ZIP'ten steam_api64.dll ve steam_api.dll dosyalarını çıkarın, sonra tekrar deneyin.\nHedef klasör: " + baseDir,
+                        "Bulunamadı",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine("Şu dosyalar bulundu ve EXE'nin yanına kopyalanacak:");
+                sb.AppendLine();
+                foreach (var kv in found)
+                {
+                    sb.AppendLine($"  • {kv.Key}");
+                    sb.AppendLine($"    {kv.Value}");
+                }
+                sb.AppendLine();
+                sb.Append("Kopyalansın mı?");
+
+                var result = MessageBox.Show(this, sb.ToString(), "Dosyalar Bulundu", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result != MessageBoxResult.Yes)
+                {
+                    Log("Kopyalama kullanıcı tarafından iptal edildi.");
+                    return;
+                }
+
+                foreach (var kv in found)
+                {
+                    string dest = Path.Combine(baseDir, kv.Key);
+                    File.Copy(kv.Value, dest, overwrite: true);
+                    Log($"📦 Kopyalandı: {kv.Key} → {dest}");
+                }
+
+                MessageBox.Show(this, "Tamamlandı! Artık \"Fix Uygula\"yı kullanabilirsiniz.", "✅ Hazır", MessageBoxButton.OK, MessageBoxImage.Information);
+                await UpdateSystemStatusAsync();
+            }
+            catch (Exception ex)
+            {
+                ShowProgress(false);
+                Log($"HATA: {ErrorDoctor.Explain(ex)}");
+            }
         }
 
         // ===================== Tema & Dil =====================
@@ -367,6 +551,11 @@ namespace SteamLANControlCenter
             TxtLog.AppendText(line + Environment.NewLine);
             TxtLog.ScrollToEnd();
 
+            if (message.StartsWith("HATA", StringComparison.OrdinalIgnoreCase) || message.Contains("❌"))
+            {
+                SetSection("log");
+            }
+
             try
             {
                 File.AppendAllText(_logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
@@ -447,6 +636,19 @@ namespace SteamLANControlCenter
                 {
                     TxtPingStatus.Text = "Ping: -- ms";
                     TxtPingStatus.Foreground = MutedBrush;
+                }
+
+                bool emu64 = File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "steam_api64.dll"));
+                bool emu32 = File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "steam_api.dll"));
+                if (emu64 || emu32)
+                {
+                    TxtEmuStatus.Text = Loc.T("emu_ok") + (emu64 && emu32 ? "" : (emu64 ? " (yalnız 64-bit)" : " (yalnız 32-bit)"));
+                    TxtEmuStatus.Foreground = GreenBrush;
+                }
+                else
+                {
+                    TxtEmuStatus.Text = Loc.T("emu_missing");
+                    TxtEmuStatus.Foreground = YellowBrush;
                 }
 
                 if (string.IsNullOrWhiteSpace(selectedGameDir) || !Directory.Exists(selectedGameDir))

@@ -52,6 +52,14 @@ namespace SteamLANControlCenter
                 ["lang_en"] = "English",
                 ["lang_de"] = "Deutsch",
                 ["mascot_tip"] = "Merhaba! Ben Mavi. Takıldığında bana sor. 🤖",
+                ["nav_game"] = "🎮  Oyun",
+                ["nav_friends"] = "👥  Arkadaşlar",
+                ["nav_settings"] = "⚙️  Ayarlar",
+                ["nav_log"] = "📋  Gelişmiş / Log",
+                ["find_emu"] = "🔍 Emülatörü Ara ve Kopyala",
+                ["dl_radmin"] = "⬇ Resmi Siteden İndir",
+                ["emu_ok"] = "🟢 Emülatör: hazır",
+                ["emu_missing"] = "🟡 Emülatör: bekleniyor — aşağıdaki \"Ara ve Kopyala\"ya bas",
             },
             ["en"] = new()
             {
@@ -96,6 +104,14 @@ namespace SteamLANControlCenter
                 ["lang_en"] = "English",
                 ["lang_de"] = "Deutsch",
                 ["mascot_tip"] = "Hi! I'm Mavi. Ask me if you get stuck. 🤖",
+                ["nav_game"] = "🎮  Game",
+                ["nav_friends"] = "👥  Friends",
+                ["nav_settings"] = "⚙️  Settings",
+                ["nav_log"] = "📋  Advanced / Log",
+                ["find_emu"] = "🔍 Search && Copy Emulator",
+                ["dl_radmin"] = "⬇ Download from official site",
+                ["emu_ok"] = "🟢 Emulator: ready",
+                ["emu_missing"] = "🟡 Emulator: waiting — use \"Search && Copy\" below",
             },
             ["de"] = new()
             {
@@ -140,6 +156,14 @@ namespace SteamLANControlCenter
                 ["lang_en"] = "English",
                 ["lang_de"] = "Deutsch",
                 ["mascot_tip"] = "Hallo! Ich bin Mavi. Frag mich, wenn du nicht weiterkommst. 🤖",
+                ["nav_game"] = "🎮  Spiel",
+                ["nav_friends"] = "👥  Freunde",
+                ["nav_settings"] = "⚙️  Einstellungen",
+                ["nav_log"] = "📋  Erweitert / Log",
+                ["find_emu"] = "🔍 Emulator suchen && kopieren",
+                ["dl_radmin"] = "⬇ Von offizieller Seite laden",
+                ["emu_ok"] = "🟢 Emulator: bereit",
+                ["emu_missing"] = "🟡 Emulator: wartet — unten \"Suchen && Kopieren\" nutzen",
             },
         };
 
@@ -229,6 +253,13 @@ namespace SteamLANControlCenter
             {
                 dlc.ToolTip = T("tip_dlc");
             }
+
+            Set("NavOyun", "nav_game");
+            Set("NavFriends", "nav_friends");
+            Set("NavSettings", "nav_settings");
+            Set("NavLog", "nav_log");
+            Set("BtnDownloadRadmin", "dl_radmin");
+            Set("BtnFindEmulator", "find_emu");
 
             if (window.FindName("TxtMascot") is TextBlock mascot)
             {
