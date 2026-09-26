@@ -23,12 +23,54 @@ namespace SteamLANControlCenter
         public MainWindow()
         {
             InitializeComponent();
-            Log("Steam LAN Control Center v2.0 Başlatıldı.");
+            Log("Steam LAN Control Center v2.1 Başlatıldı.");
 
             statusTimer = new DispatcherTimer();
             statusTimer.Interval = TimeSpan.FromSeconds(3);
             statusTimer.Tick += async (s, e) => await UpdateSystemStatusAsync();
             statusTimer.Start();
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            await UpdateSystemStatusAsync();
+
+            bool isRadminRunning = Process.GetProcessesByName("RvServices").Length > 0 ||
+                                   Process.GetProcessesByName("Radmin_VPN").Length > 0;
+
+            if (!isRadminRunning)
+            {
+                BannerAutoSetup.Visibility = Visibility.Visible;
+                MessageBoxResult result = MessageBox.Show(
+                    "Sisteminizde Radmin VPN veya aktif ağ bağlantısı bulunamadı.\n\nSizin için otomatik yapılması gereken standart LAN konfigürasyonunu ve güvenlik duvarı ayarlarını kuralım mı?",
+                    "Otomatik Kurulum Önerisi",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    ExecuteAutoSetup();
+                }
+            }
+        }
+
+        private void BtnAutoSetup_Click(object sender, RoutedEventArgs e)
+        {
+            ExecuteAutoSetup();
+        }
+
+        private void ExecuteAutoSetup()
+        {
+            Log("⚙️ Otomatik kurulum ve konfigürasyon başlatılıyor...");
+            
+            // Standart Radmin IP Şablonu ve Otomatik Ayarlar
+            TxtFriendIp.Text = "26.0.0.1";
+            ChkUnlockDlc.IsChecked = true;
+            ChkFirewall.IsChecked = true;
+            ChkCustomBroadcast.IsChecked = true;
+
+            BannerAutoSetup.Visibility = Visibility.Collapsed;
+            Log("✅ Standart ayarlar ve hazır parametreler başarıyla yüklendi. Oyun klasörünüzü seçip Fix uygulayabilirsiniz.");
         }
 
         private void Log(string message)
@@ -46,10 +88,11 @@ namespace SteamLANControlCenter
             {
                 TxtRadminStatus.Text = "🟢 Radmin VPN: Aktif";
                 TxtRadminStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#a6e3a1"));
+                BannerAutoSetup.Visibility = Visibility.Collapsed;
             }
             else
             {
-                TxtRadminStatus.Text = "🔴 Radmin VPN: Kapalı";
+                TxtRadminStatus.Text = "🔴 Radmin VPN: Bulunamadı / Kapalı";
                 TxtRadminStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f38ba8"));
             }
 
@@ -60,7 +103,7 @@ namespace SteamLANControlCenter
                 {
                     using (Ping pinger = new Ping())
                     {
-                        PingReply reply = await pinger.SendPingAsync(ip, 1000);
+                        PingReply reply = await pinger.SendPingAsync(ip, 800);
                         if (reply.Status == IPStatus.Success)
                         {
                             TxtPingStatus.Text = $"Ping: {reply.RoundtripTime} ms";
@@ -68,7 +111,7 @@ namespace SteamLANControlCenter
                         }
                         else
                         {
-                            TxtPingStatus.Text = "Ping: Zaman Aşımı";
+                            TxtPingStatus.Text = "Ping: Erişilemiyor";
                             TxtPingStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f38ba8"));
                         }
                     }
@@ -118,7 +161,7 @@ namespace SteamLANControlCenter
         {
             if (string.IsNullOrEmpty(selectedGameDir) || !Directory.Exists(selectedGameDir))
             {
-                MessageBox.Show("Lütfen geçerli bir oyun klasörü seçin!", "Uyarı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Lütfen önce geçerli bir oyun klasörü seçin!", "Uyarı", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -153,10 +196,6 @@ namespace SteamLANControlCenter
                 {
                     Log("❌ HATA: Klasörde steam_api.dll veya steam_api64.dll bulunamadı.");
                 }
-            }
-            catch (UnauthorizedAccessException)
-            {
-                Log("HATA: Klasöre erişim reddedildi. Yönetici hakları gerekiyor.");
             }
             catch (Exception ex)
             {
