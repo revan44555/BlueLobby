@@ -59,8 +59,9 @@ namespace SteamLANControlCenter
             Loc.Apply(this);
             ThemeManager.Apply(this, _settings.Theme);
             ApplyMascotVisibility(_settings.ShowMascot);
+            SetSection("home");
 
-            Log("Steam LAN Control Center v2.1 başlatıldı. Klasörü seçebilir veya pencereye sürükleyip bırakabilirsiniz.");
+            Log("Steam LAN Control Center v3.0 başlatıldı. Klasörü seçebilir veya pencereye sürükleyip bırakabilirsiniz.");
 
             _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
             _statusTimer.Tick += async (_, _) => await UpdateSystemStatusAsync();
@@ -131,13 +132,19 @@ namespace SteamLANControlCenter
 
         private void SetSection(string section)
         {
+            SectionHome.Visibility = section == "home" ? Visibility.Visible : Visibility.Collapsed;
             SectionGame.Visibility = section == "game" ? Visibility.Visible : Visibility.Collapsed;
             SectionFriends.Visibility = section == "friends" ? Visibility.Visible : Visibility.Collapsed;
+            SectionNetwork.Visibility = section == "network" ? Visibility.Visible : Visibility.Collapsed;
+            SectionTools.Visibility = section == "tools" ? Visibility.Visible : Visibility.Collapsed;
             SectionSettings.Visibility = section == "settings" ? Visibility.Visible : Visibility.Collapsed;
             SectionLog.Visibility = section == "log" ? Visibility.Visible : Visibility.Collapsed;
 
+            HighlightNav(NavHome, section == "home");
             HighlightNav(NavOyun, section == "game");
             HighlightNav(NavFriends, section == "friends");
+            HighlightNav(NavNetwork, section == "network");
+            HighlightNav(NavTools, section == "tools");
             HighlightNav(NavSettings, section == "settings");
             HighlightNav(NavLog, section == "log");
         }
