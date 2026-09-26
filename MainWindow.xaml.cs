@@ -396,7 +396,7 @@ namespace SteamLANControlCenter
         {
             // Bazı Windows/DPI ortamlarında XAML WindowState ilk layout'tan önce uygulanmayabilir.
             // Dispatcher ile bir kez daha maximize ederek pencerenin gerçekten çalışma alanına oturmasını sağlarız.
-            Dispatcher.BeginInvoke(new Action(() =>
+            _ = Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (!_isFullscreen)
                 {
@@ -622,7 +622,7 @@ namespace SteamLANControlCenter
         {
             if (!Dispatcher.CheckAccess())
             {
-                Dispatcher.BeginInvoke(new Action(() => Log(message)));
+                Dispatcher.InvokeAsync(() => Log(message));
                 return;
             }
 
