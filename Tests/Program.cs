@@ -66,3 +66,4 @@ Check("ErrorDoctor izin hatası öneri veriyor", ErrorDoctor.Explain(new Unautho
 Console.WriteLine();
 Console.WriteLine($"Sonuç: {passed} geçti, {failed} kaldı.");
 return failed == 0 ? 0 : 1;
+
