@@ -2,14 +2,20 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Steam LAN Control Center v2.1" 
-        Height="780" Width="680"
-        MinWidth="500" MinHeight="600"
+        Height="1020" Width="740"
+        MinWidth="620" MinHeight="880"
         ResizeMode="CanResizeWithGrip"
         Background="#181825" WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI, Segoe UI Variable, Arial"
-        Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+        Closed="Window_Closed"
+        AllowDrop="True"
+        DragEnter="Window_DragEnter"
+        Drop="Window_Drop">
     <Grid Margin="15">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -18,25 +24,31 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Başlık -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="🎮 STEAM LAN CONTROL CENTER" FontSize="20" FontWeight="Bold" Foreground="#f5e0dc" HorizontalAlignment="Center"/>
-            <TextBlock Text="Gelişmiş Goldberg LAN &amp; Radmin VPN Otomasyon Paneli" FontSize="12" Foreground="#a6adc8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock x:Name="TxtTitle" Text="🎮 STEAM LAN CONTROL CENTER" FontSize="20" FontWeight="Bold" Foreground="#f5e0dc" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="TxtSubtitle" Text="Goldberg LAN &amp; Radmin VPN otomasyon / yedekleme paneli" FontSize="12" Foreground="#a6adc8" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                <TextBlock x:Name="TxtWarn" Text="Yalnızca sahip olduğunuz oyunlar ve yasal LAN kullanımı içindir." FontSize="11" Foreground="#f9e2af" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+            </StackPanel>
+            <TextBlock x:Name="TxtMascot" Text="🤖" FontSize="26" HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
+                       ToolTip="Merhaba! Ben Mavi. Takıldığında bana sor. 🤖" MouseLeftButtonUp="TxtMascot_Click">
+                <TextBlock.RenderTransform>
+                    <TranslateTransform x:Name="MascotTransform"/>
+                </TextBlock.RenderTransform>
+            </TextBlock>
+        </Grid>
 
-        <!-- Akıllı Otomatik Kurulum Bildirim Baneri -->
         <Border x:Name="BannerAutoSetup" Grid.Row="1" Background="#f38ba8" CornerRadius="6" Padding="10" Margin="0,0,0,10" Visibility="Collapsed">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="⚠️ Sistemde Radmin VPN veya gerekli bileşenler eksik!" Foreground="#11111b" FontWeight="Bold" VerticalAlignment="Center" FontSize="12"/>
-                <Button Grid.Column="1" Content="⚡ Hızlı Otomatik Kur" Click="BtnAutoSetup_Click" Background="#11111b" Foreground="#ffffff" FontWeight="Bold" Padding="8,4" Cursor="Hand"/>
+                <TextBlock x:Name="BannerText" Text="⚠️ Radmin VPN ağ adaptörü bulunamadı." Foreground="#11111b" FontWeight="Bold" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap"/>
+                <Button x:Name="BtnAutoSetupBanner" Grid.Column="1" Content="⚡ Standart LAN Ayarlarını Uygula" Click="BtnAutoSetup_Click" Background="#11111b" Foreground="#ffffff" FontWeight="Bold" Padding="8,4" Cursor="Hand" Margin="8,0,0,0"/>
             </Grid>
         </Border>
 
-        <!-- Canlı Durum Kartı -->
         <Border Grid.Row="2" Background="#1e1e2e" CornerRadius="8" Padding="12" Margin="0,0,0,10" BorderBrush="#313244" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
@@ -53,49 +65,60 @@
             </Grid>
         </Border>
 
-        <!-- Ayarlar ve Girdiler -->
         <Border Grid.Row="3" Background="#1e1e2e" CornerRadius="8" Padding="12" Margin="0,0,0,10" BorderBrush="#313244" BorderThickness="1">
             <StackPanel>
-                <!-- Oyun Klasör Seçimi -->
                 <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="115"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="40"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Oyun Klasörü:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBlock x:Name="LblGameFolder" Text="Oyun Klasörü:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
                     <TextBox x:Name="TxtGamePath" IsReadOnly="True" Background="#11111b" Foreground="#a6adc8" BorderBrush="#45475a" Padding="6" FontSize="12" Grid.Column="1"/>
-                    <Button Grid.Column="2" Content="..." Click="BtnBrowse_Click" Background="#45475a" Foreground="#cdd6f4" Margin="5,0,0,0" FontSize="13" FontWeight="Bold" Cursor="Hand"/>
+                    <Button x:Name="BtnBrowse" Grid.Column="2" Content="..." Click="BtnBrowse_Click" Background="#45475a" Foreground="#cdd6f4" Margin="5,0,0,0" FontSize="13" FontWeight="Bold" Cursor="Hand"/>
                 </Grid>
 
-                <!-- Oyuncu İsmi & AppID -->
                 <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="115"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="60"/>
-                        <ColumnDefinition Width="90"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Oyuncu Adı:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
-                    <TextBox x:Name="TxtPlayerName" Grid.Column="1" Text="Player1" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="6" FontSize="13" Margin="0,0,8,0"/>
-
-                    <TextBlock Text="AppID:" Grid.Column="2" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
-                    <TextBox x:Name="TxtAppId" Grid.Column="3" Text="480" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="6" FontSize="13"/>
+                    <TextBlock x:Name="LblExe" Text="Çalıştırıcı:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
+                    <ComboBox x:Name="CmbExes" Grid.Column="1" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" FontSize="12" Padding="4" SelectionChanged="CmbExes_SelectionChanged"/>
                 </Grid>
 
-                <!-- Arkadaş Radmin IP & Oyun Dili -->
                 <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="115"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="45"/>
-                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="95"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Arkadaş IP:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
-                    <TextBox x:Name="TxtFriendIp" Grid.Column="1" Text="26.x.x.x" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="6" FontSize="12" Margin="0,0,8,0" TextChanged="TxtFriendIp_TextChanged"/>
+                    <TextBlock x:Name="LblPlayerName" Text="Oyuncu Adı:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="TxtPlayerName" Grid.Column="1" Text="Player1" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="6" FontSize="13" Margin="0,0,8,0" MaxLength="64"/>
 
-                    <TextBlock Text="Dil:" Grid.Column="2" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
-                    <ComboBox x:Name="CmbLanguage" Grid.Column="3" Background="#11111b" Foreground="#11111b" BorderBrush="#45475a" FontSize="12" Padding="4">
+                    <TextBlock x:Name="LblAppId" Text="AppID:" Grid.Column="2" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="TxtAppId" Grid.Column="3" Text="480" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="6" FontSize="13" MaxLength="10"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="115"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="55"/>
+                        <ColumnDefinition Width="105"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="LblFriendIp" Text="Arkadaş IP:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
+                    <TextBox x:Name="TxtFriendIp" Grid.Column="1" Text="" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="6" FontSize="12" Margin="0,0,8,0" TextChanged="TxtFriendIp_TextChanged"/>
+
+                    <TextBlock x:Name="LblGameLang" Text="Dil:" Grid.Column="2" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="13"/>
+                    <ComboBox x:Name="CmbLanguage" Grid.Column="3" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" FontSize="12" Padding="4">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Foreground" Value="#cdd6f4"/>
+                                <Setter Property="Background" Value="#11111b"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
                         <ComboBoxItem Content="english" IsSelected="True"/>
                         <ComboBoxItem Content="turkish"/>
                         <ComboBoxItem Content="german"/>
@@ -104,28 +127,103 @@
                     </ComboBox>
                 </Grid>
 
-                <!-- Onay Kutuları -->
-                <WrapPanel Margin="0,4,0,0">
-                    <CheckBox x:Name="ChkUnlockDlc" Content="Tüm DLC'leri Aç" IsChecked="True" Foreground="#cdd6f4" FontSize="12" Margin="0,0,12,5"/>
+                <WrapPanel Margin="0,4,0,8">
+                    <CheckBox x:Name="ChkUnlockDlc" Content="DLC.txt şablonu oluştur" IsChecked="False" Foreground="#cdd6f4" FontSize="12" Margin="0,0,12,5"/>
                     <CheckBox x:Name="ChkFirewall" Content="Güvenlik Duvarı İzni" IsChecked="True" Foreground="#cdd6f4" FontSize="12" Margin="0,0,12,5"/>
                     <CheckBox x:Name="ChkCustomBroadcast" Content="Radmin Lobi Sabitleme" IsChecked="True" Foreground="#cdd6f4" FontSize="12" Margin="0,0,0,5"/>
+                </WrapPanel>
+
+                <Separator Background="#313244" Margin="0,0,0,8"/>
+
+                <WrapPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,14,5">
+                        <TextBlock x:Name="LblTheme" Text="Tema:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="12" Margin="0,0,5,0"/>
+                        <ComboBox x:Name="CmbTheme" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" FontSize="12" Padding="3" SelectionChanged="CmbTheme_SelectionChanged">
+                            <ComboBoxItem x:Name="BtnThemeGece" Content="Gece" IsSelected="True" Tag="gece"/>
+                            <ComboBoxItem x:Name="BtnThemeGunduz" Content="Gündüz" Tag="gunduz"/>
+                            <ComboBoxItem x:Name="BtnThemePembe" Content="Pembe" Tag="pembe"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,14,5">
+                        <TextBlock x:Name="LblUiLang" Text="Arayüz Dili:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="12" Margin="0,0,5,0"/>
+                        <ComboBox x:Name="CmbUiLang" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" FontSize="12" Padding="3" SelectionChanged="CmbUiLang_SelectionChanged">
+                            <ComboBoxItem x:Name="BtnUiTr" Content="Türkçe" IsSelected="True" Tag="tr"/>
+                            <ComboBoxItem x:Name="BtnUiEn" Content="English" Tag="en"/>
+                            <ComboBoxItem x:Name="BtnUiDe" Content="Deutsch" Tag="de"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <CheckBox x:Name="ChkMascot" Content="Maskotu göster" IsChecked="True" Foreground="#cdd6f4" FontSize="12" VerticalAlignment="Center" Click="ChkMascot_Click"/>
                 </WrapPanel>
             </StackPanel>
         </Border>
 
-        <!-- İşlem Butonları -->
-        <Grid Grid.Row="4" Margin="0,0,0,10">
+        <Border Grid.Row="4" Background="#1e1e2e" CornerRadius="8" Padding="12" Margin="0,0,0,10" BorderBrush="#313244" BorderThickness="1">
+            <StackPanel>
+                <TextBlock x:Name="LblFriends" Text="👥 Arkadaş Listesi" FontSize="13" FontWeight="SemiBold" Foreground="#cdd6f4" Margin="0,0,0,8"/>
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="45"/>
+                        <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="45"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="LblFriendName" Text="İsim:" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox x:Name="TxtFriendName" Grid.Column="1" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="5" FontSize="12" Margin="0,0,8,0" MaxLength="32"/>
+                    <TextBlock x:Name="LblFriendIp2" Text="IP:" Grid.Column="2" Foreground="#cdd6f4" VerticalAlignment="Center" FontSize="12"/>
+                    <TextBox x:Name="TxtNewFriendIp" Grid.Column="3" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" Padding="5" FontSize="12" Margin="0,0,8,0"/>
+                    <Button x:Name="BtnAddFriend" Grid.Column="4" Content="Ekle" Click="BtnAddFriend_Click" Background="#a6e3a1" Foreground="#11111b" FontWeight="Bold" Padding="12,5" Cursor="Hand"/>
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ListBox x:Name="LstFriends" Height="96" Background="#11111b" Foreground="#cdd6f4" BorderBrush="#45475a" FontSize="12" Padding="4" SelectionChanged="LstFriends_SelectionChanged" MouseDoubleClick="LstFriends_DoubleClick">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                                    <TextBlock Text="—" Foreground="#a6adc8" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding Ip}" Foreground="#a6adc8"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button x:Name="BtnUseFriend" Grid.Column="1" Content="Kullan" Click="BtnUseFriend_Click" Background="#45475a" Foreground="#cdd6f4" Padding="12,5" Margin="8,0,0,0" VerticalAlignment="Top" Cursor="Hand"/>
+                    <Button x:Name="BtnRemoveFriend" Grid.Column="2" Content="Sil" Click="BtnRemoveFriend_Click" Background="#45475a" Foreground="#cdd6f4" Padding="12,5" Margin="8,0,0,0" VerticalAlignment="Top" Cursor="Hand"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="5" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.2*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="1.2*"/>
             </Grid.ColumnDefinitions>
-            <Button Content="⚡ Goldberg Fix Uygula" Click="BtnApplyFix_Click" Background="#a6e3a1" Foreground="#11111b" FontWeight="Bold" FontSize="13" Padding="10" Margin="0,0,4,0" Cursor="Hand"/>
-            <Button Content="🔄 Geri Yükle" Click="BtnRestore_Click" Background="#f9e2af" Foreground="#11111b" FontWeight="Bold" FontSize="13" Padding="10" Grid.Column="1" Margin="2,0,2,0" Cursor="Hand"/>
+            <Button x:Name="BtnApply" Content="⚡ Fix Uygula" Click="BtnApplyFix_Click" Background="#a6e3a1" Foreground="#11111b" FontWeight="Bold" FontSize="13" Padding="10" Margin="0,0,4,0" Cursor="Hand"/>
+            <Button x:Name="BtnRestore" Content="🔄 Geri Yükle" Click="BtnRestore_Click" Background="#f9e2af" Foreground="#11111b" FontWeight="Bold" FontSize="13" Padding="10" Grid.Column="1" Margin="2,0,2,0" Cursor="Hand"/>
             <Button x:Name="BtnLaunch" Content="🚀 Oyunu Başlat" Click="BtnLaunch_Click" IsEnabled="False" Background="#89b4fa" Foreground="#11111b" FontWeight="Bold" FontSize="13" Padding="10" Grid.Column="2" Margin="4,0,0,0" Cursor="Hand"/>
         </Grid>
 
-        <!-- Bilgi Konsolu -->
-        <TextBox x:Name="TxtLog" Grid.Row="5" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Background="#11111b" Foreground="#a6e3a1" FontFamily="Consolas, Courier New" FontSize="12" Padding="8" BorderBrush="#313244"/>
+        <Border x:Name="ProgressArea" Grid.Row="6" Background="#1e1e2e" CornerRadius="8" Padding="10" Margin="0,0,0,10" BorderBrush="#313244" BorderThickness="1" Visibility="Collapsed">
+            <StackPanel>
+                <ProgressBar x:Name="ProgressBar" Height="10" Minimum="0" Maximum="100" Foreground="#89b4fa" Background="#11111b" BorderBrush="#45475a"/>
+                <TextBlock x:Name="TxtProgress" Margin="0,6,0,0" Foreground="#cdd6f4" FontSize="12" Text="Hazırlanıyor..."/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="7" Background="#1e1e2e" CornerRadius="8" Padding="0" BorderBrush="#313244" BorderThickness="1">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Right" Margin="6">
+                    <Button x:Name="BtnCopyLog" Content="Kopyala" Click="BtnCopyLog_Click" Background="#45475a" Foreground="#cdd6f4" Padding="8,3" Margin="0,0,4,0" Cursor="Hand"/>
+                    <Button x:Name="BtnExportLog" Content="Dışa Aktar" Click="BtnExportLog_Click" Background="#45475a" Foreground="#cdd6f4" Padding="8,3" Margin="0,0,4,0" Cursor="Hand"/>
+                    <Button x:Name="BtnClearLog" Content="Temizle" Click="BtnClearLog_Click" Background="#45475a" Foreground="#cdd6f4" Padding="8,3" Cursor="Hand"/>
+                </StackPanel>
+                <TextBox x:Name="TxtLog" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Background="#11111b" Foreground="#a6e3a1" FontFamily="Consolas, Courier New" FontSize="12" Padding="8" BorderBrush="#313244" BorderThickness="0"/>
+            </DockPanel>
+        </Border>
     </Grid>
 </Window>
