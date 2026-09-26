@@ -9,10 +9,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>SteamLANControlCenter</AssemblyName>
     <RootNamespace>SteamLANControlCenter</RootNamespace>
-    <Version>2.1.0</Version>
-    <AssemblyVersion>2.1.0.0</AssemblyVersion>
-    <FileVersion>2.1.0.0</FileVersion>
-    <InformationalVersion>2.1.0</InformationalVersion>
+    <Version>3.0.0</Version>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <FileVersion>3.0.0.0</FileVersion>
+    <InformationalVersion>3.0.0</InformationalVersion>
     <Product>Steam LAN Control Center</Product>
     <Description>Goldberg LAN and Radmin VPN automation / backup panel.</Description>
     <Company></Company>

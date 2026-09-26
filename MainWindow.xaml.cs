@@ -40,9 +40,20 @@ namespace SteamLANControlCenter
         private string selectedGameDir = string.Empty;
         private string selectedExePath = string.Empty;
 
+        private bool _isFullscreen;
+        private WindowStyle _normalWindowStyle;
+        private ResizeMode _normalResizeMode;
+        private WindowState _normalWindowState;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            // v3 UI masaüstü launcher davranışı: uygulama her açılışta kullanılabilir çalışma alanını doldurur.
+            WindowState = WindowState.Maximized;
+            _normalWindowStyle = WindowStyle;
+            _normalResizeMode = ResizeMode;
+            _normalWindowState = WindowState;
 
             string appDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SteamLANControlCenter");
             string localDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SteamLANControlCenter");
@@ -59,7 +70,6 @@ namespace SteamLANControlCenter
             Loc.Apply(this);
             ThemeManager.Apply(this, _settings.Theme);
             ApplyMascotVisibility(_settings.ShowMascot);
-            SetSection("home");
 
             Log("Steam LAN Control Center v3.0 başlatıldı. Klasörü seçebilir veya pencereye sürükleyip bırakabilirsiniz.");
 
@@ -132,19 +142,13 @@ namespace SteamLANControlCenter
 
         private void SetSection(string section)
         {
-            SectionHome.Visibility = section == "home" ? Visibility.Visible : Visibility.Collapsed;
             SectionGame.Visibility = section == "game" ? Visibility.Visible : Visibility.Collapsed;
             SectionFriends.Visibility = section == "friends" ? Visibility.Visible : Visibility.Collapsed;
-            SectionNetwork.Visibility = section == "network" ? Visibility.Visible : Visibility.Collapsed;
-            SectionTools.Visibility = section == "tools" ? Visibility.Visible : Visibility.Collapsed;
             SectionSettings.Visibility = section == "settings" ? Visibility.Visible : Visibility.Collapsed;
             SectionLog.Visibility = section == "log" ? Visibility.Visible : Visibility.Collapsed;
 
-            HighlightNav(NavHome, section == "home");
             HighlightNav(NavOyun, section == "game");
             HighlightNav(NavFriends, section == "friends");
-            HighlightNav(NavNetwork, section == "network");
-            HighlightNav(NavTools, section == "tools");
             HighlightNav(NavSettings, section == "settings");
             HighlightNav(NavLog, section == "log");
         }
@@ -390,6 +394,16 @@ namespace SteamLANControlCenter
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Bazı Windows/DPI ortamlarında XAML WindowState ilk layout'tan önce uygulanmayabilir.
+            // Dispatcher ile bir kez daha maximize ederek pencerenin gerçekten çalışma alanına oturmasını sağlarız.
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!_isFullscreen)
+                {
+                    WindowState = WindowState.Maximized;
+                }
+            }), DispatcherPriority.ApplicationIdle);
+
             StartMascotBounce();
 
             if (!string.IsNullOrWhiteSpace(selectedGameDir) && Directory.Exists(selectedGameDir))
@@ -426,6 +440,64 @@ namespace SteamLANControlCenter
                     await ExecuteAutoSetupAsync();
                 }
             }
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F11)
+            {
+                ToggleFullscreen();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape && _isFullscreen)
+            {
+                ExitFullscreen();
+                e.Handled = true;
+            }
+        }
+
+        private void ToggleFullscreen()
+        {
+            if (_isFullscreen)
+            {
+                ExitFullscreen();
+                return;
+            }
+
+            _normalWindowStyle = WindowStyle;
+            _normalResizeMode = ResizeMode;
+            _normalWindowState = WindowState;
+
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            WindowState = WindowState.Maximized;
+            _isFullscreen = true;
+        }
+
+        private void ExitFullscreen()
+        {
+            WindowStyle = _normalWindowStyle;
+            ResizeMode = _normalResizeMode;
+            WindowState = _normalWindowState == WindowState.Minimized
+                ? WindowState.Normal
+                : _normalWindowState;
+            _isFullscreen = false;
+        }
+
+        private async void BtnPingTest_Click(object sender, RoutedEventArgs e)
+        {
+            await UpdateSystemStatusAsync();
+            Log("Ping testi tamamlandı.");
+        }
+
+        private async void BtnConnectionScan_Click(object sender, RoutedEventArgs e)
+        {
+            await UpdateSystemStatusAsync();
+            bool radmin = await IsRadminActiveAsync();
+            string ip = TxtFriendIp.Text.Trim();
+            Log(radmin
+                ? $"Bağlantı taraması: Radmin aktif{(string.IsNullOrWhiteSpace(ip) ? ". Hedef IP belirtilmedi." : $", hedef {ip}.")}"
+                : "Bağlantı taraması: Radmin VPN aktif değil.");
         }
 
         private void Window_Closed(object sender, EventArgs e)
