@@ -14,12 +14,12 @@ permissions:
 
 jobs:
   build:
-    name: Build Steam Control Center
+    name: Build Windows EXE
     runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v6
@@ -27,35 +27,57 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore SteamLANControlCenter.csproj
 
       - name: Publish EXE
-        run: dotnet publish -c Release -r win-x64 --self-contained false -o publish
+        run: >
+          dotnet publish SteamLANControlCenter.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          -p:UseAppHost=true
+          -o publish
 
       - name: Verify EXE
         shell: pwsh
         run: |
-          Write-Host "=== Published files ==="
-          Get-ChildItem publish -Recurse
+          Write-Host "=== Publish output ==="
+          Get-ChildItem -Path publish -Recurse
 
-          $exe = Get-ChildItem publish -Filter *.exe -Recurse
+          $exe = Join-Path $PWD "publish\SteamLANControlCenter.exe"
 
-          if (-not $exe) {
-            Write-Error "EXE bulunamadi!"
+          if (-not (Test-Path $exe)) {
+            Write-Error "SteamLANControlCenter.exe bulunamadi."
             exit 1
           }
 
+          $file = Get-Item $exe
+
           Write-Host ""
           Write-Host "=== EXE FOUND ==="
+          Write-Host "Path: $($file.FullName)"
+          Write-Host "Size: $([math]::Round($file.Length / 1KB, 2)) KB"
 
-          foreach ($file in $exe) {
-            Write-Host $file.FullName
-            Write-Host "Size: $([math]::Round($file.Length / 1KB, 2)) KB"
-          }
-
-      - name: Upload EXE to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      # Main branch buildleri için geçici/son build Release'ı.
+      # Artifact kullanılmıyor; dolayısıyla Actions ZIP'i oluşmuyor.
+      - name: Publish Latest Build
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v3
         with:
-          files: publish/*.exe
+          tag_name: latest
+          target_commitish: ${{ github.sha }}
+          name: Latest Build
+          prerelease: true
+          files: publish/SteamLANControlCenter.exe
+          overwrite_files: true
+          generate_release_notes: false
+
+      # Sen daha sonra v3.0.1, v3.0.2 gibi tag oluşturduğunda
+      # doğrudan o Release'e EXE eklenir.
+      - name: Publish Versioned Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: publish/SteamLANControlCenter.exe
+          overwrite_files: true
           generate_release_notes: true
