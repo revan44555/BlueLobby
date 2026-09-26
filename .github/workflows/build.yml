@@ -2,29 +2,109 @@ name: Build Steam Control Center EXE
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*'
+      - "v*"
+
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   build:
+    name: Build Windows EXE
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
+
+      - name: Find Project
+        shell: pwsh
+        run: |
+          Write-Host "Searching for .csproj files..."
+          Get-ChildItem -Path . -Filter *.csproj -Recurse | ForEach-Object {
+            Write-Host $_.FullName
+          }
+
+      - name: Restore
+        shell: pwsh
+        run: |
+          $project = Get-ChildItem -Path . -Filter *.csproj -Recurse | Select-Object -First 1
+
+          if (-not $project) {
+            Write-Error "No .csproj file found."
+            exit 1
+          }
+
+          Write-Host "Using project: $($project.FullName)"
+          dotnet restore $project.FullName
 
       - name: Publish EXE
-        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+        shell: pwsh
+        run: |
+          $project = Get-ChildItem -Path . -Filter *.csproj -Recurse | Select-Object -First 1
 
+          if (-not $project) {
+            Write-Error "No .csproj file found."
+            exit 1
+          }
+
+          Write-Host "Publishing: $($project.FullName)"
+
+          dotnet publish $project.FullName `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o publish
+
+      - name: Show Published Files
+        shell: pwsh
+        run: |
+          Write-Host "===== PUBLISH OUTPUT ====="
+
+          if (-not (Test-Path "publish")) {
+            Write-Error "Publish folder was not created."
+            exit 1
+          }
+
+          Get-ChildItem "publish" -Recurse | Format-Table FullName, Length
+
+          $exe = Get-ChildItem "publish" -Filter *.exe -Recurse
+
+          if (-not $exe) {
+            Write-Error "No EXE file was created."
+            exit 1
+          }
+
+          Write-Host ""
+          Write-Host "===== EXE FOUND ====="
+
+          foreach ($file in $exe) {
+            Write-Host $file.FullName
+          }
+
+      # Actions bölümünde test amaçlı artifact.
+      # GitHub bunu ZIP olarak indirir; bu normaldir.
+      - name: Upload EXE Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SteamLANControlCenter-EXE
+          path: publish/*.exe
+          if-no-files-found: error
+
+      # Sadece v3.0.0 / v3.0.1 gibi tag gönderildiğinde Release oluşturur.
       - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: publish/*.exe
