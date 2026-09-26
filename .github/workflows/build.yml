@@ -41,26 +41,24 @@ jobs:
       - name: Verify EXE
         shell: pwsh
         run: |
-          Write-Host "=== Publish output ==="
-          Get-ChildItem -Path publish -Recurse
-
           $exe = Join-Path $PWD "publish\SteamLANControlCenter.exe"
 
           if (-not (Test-Path $exe)) {
-            Write-Error "SteamLANControlCenter.exe bulunamadi."
-            exit 1
+              Write-Error "SteamLANControlCenter.exe bulunamadi."
+              exit 1
           }
 
           $file = Get-Item $exe
 
-          Write-Host ""
-          Write-Host "=== EXE FOUND ==="
-          Write-Host "Path: $($file.FullName)"
-          Write-Host "Size: $([math]::Round($file.Length / 1KB, 2)) KB"
+          Write-Host "================================"
+          Write-Host "EXE BASARIYLA OLUSTURULDU"
+          Write-Host "================================"
+          Write-Host "Dosya: $($file.Name)"
+          Write-Host "Boyut: $([math]::Round($file.Length / 1KB, 2)) KB"
+          Write-Host "Yol:   $($file.FullName)"
+          Write-Host "================================"
 
-      # Main branch buildleri için geçici/son build Release'ı.
-      # Artifact kullanılmıyor; dolayısıyla Actions ZIP'i oluşmuyor.
-      - name: Publish Latest Build
+      - name: Update Latest Build
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v3
         with:
@@ -72,9 +70,7 @@ jobs:
           overwrite_files: true
           generate_release_notes: false
 
-      # Sen daha sonra v3.0.1, v3.0.2 gibi tag oluşturduğunda
-      # doğrudan o Release'e EXE eklenir.
-      - name: Publish Versioned Release
+      - name: Create Versioned Release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
         with:
