@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>BlueLobby.Tests</AssemblyName>
+    <RootNamespace>BlueLobby.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Ana projeye ProjectReference yerine derlenmiş DLL referansı:
+    WPF FrameworkReference'i teste akmaz, testler Linux/macOS'ta da koşar.
+    Önce ana projeyi derleyin:
+      dotnet build BlueLobby.csproj -c Release
+  -->
+  <ItemGroup>
+    <Reference Include="BlueLobby">
+      <HintPath>..\bin\Release\net8.0-windows\BlueLobby.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using SteamLANControlCenter;
+using BlueLobby;
 
 int passed = 0;
 int failed = 0;
@@ -37,13 +37,13 @@ var manifest = new PatchManifest
     CreatedFiles = { @"C:\Games\Example\steam_settings\force_language.txt" },
     CreatedDirectories = { @"C:\Games\Example\steam_settings" },
     TextBackups = { new FileBackup { OriginalPath = "a.txt", BackupPath = "a.txt.pre_slcc" } },
-    FirewallRuleName = "SteamLAN_test"
+    FirewallRuleName = "BlueLobby_test"
 };
 string json = JsonSerializer.Serialize(manifest);
 var back = JsonSerializer.Deserialize<PatchManifest>(json);
-Check("Manifest roundtrip", back != null && back.Entries.Count == 1 && back.FirewallRuleName == "SteamLAN_test" && back.TextBackups.Count == 1);
+Check("Manifest roundtrip", back != null && back.Entries.Count == 1 && back.FirewallRuleName == "BlueLobby_test" && back.TextBackups.Count == 1);
 
-// 3) FindSteamApiTargets: iç içe klasörde bulur, exe'yi karıştırmaz
+// 3) FindApiDllTargets: iç içe klasörde bulur, exe'yi karıştırmaz
 string temp = Path.Combine(Path.GetTempPath(), "slcc_test_" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(Path.Combine(temp, "Binaries", "Win64"));
 Directory.CreateDirectory(Path.Combine(temp, "redist"));
@@ -52,9 +52,9 @@ File.WriteAllBytes(Path.Combine(temp, "steam_api.dll"), new byte[] { 1 });
 File.WriteAllBytes(Path.Combine(temp, "redist", "steam_api64.dll"), new byte[] { 1 });
 File.WriteAllBytes(Path.Combine(temp, "game.exe"), new byte[] { 1 });
 
-var targets = Core.FindSteamApiTargets(temp);
-Check("FindSteamApiTargets 3 hedef buldu", targets.Count == 3);
-Check("FindSteamApiTargets 64-bit işareti doğru", targets.Count(t => t.Is64Bit) == 2);
+var targets = Core.FindApiDllTargets(temp);
+Check("FindApiDllTargets 3 hedef buldu", targets.Count == 3);
+Check("FindApiDllTargets 64-bit işareti doğru", targets.Count(t => t.Is64Bit) == 2);
 Directory.Delete(temp, recursive: true);
 
 // 4) ErrorDoctor: dosya kilidi mesajı kullanıcı dilinde
