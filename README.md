@@ -29,3 +29,23 @@ dotnet build -c Release
 
 ## Not
 Bu proje herhangi bir oyun platformu, mağaza veya VPN sağlayıcısı ile bağlantılı/destekli değildir. Tüm markalar ilgili sahiplerine aittir.
+
+
+## Mimari (v3.1+)
+Proje iki platformda da çalışacak şekilde katmanlara ayrıldı:
+
+- `BlueLobby.Platform` — `IPlatformServices` sözleşmesi; `Windows/WindowsPlatformServices.cs` (netsh firewall, Radmin tespiti) ve `Linux/LinuxPlatformServices.cs` (Tailscale/ZeroTier tespiti, XDG yolları) çalışma zamanında seçilir. Linux'ta firewall özelliği kapalıdır (Wine/Proton kendi iznini yönetir).
+- `BlueLobby.Core` — platform bağımsız iş mantığı: hedef tarama (`.dll` ve `.so`), yama motoru, yedekleme/geri yükleme manifesti.
+- `BlueLobby` — Avalonia tabanlı arayüz; aynı kod `win-x64` ve `linux-x64` olarak derlenir.
+  - `Ui.cs` — stil/ölçü yardımcıları (görsel düzen revizyonları burada yapılmalı)
+  - `MainWindow.Ui.cs` — arayüz kurulumu (partial)
+  - `MainWindow.axaml.cs` — iş mantığı (partial)
+
+Derleme:
+```bash
+dotnet build BlueLobby.sln -c Release
+dotnet publish BlueLobby/BlueLobby.csproj -c Release -r win-x64 --self-contained -o pub/win
+dotnet publish BlueLobby/BlueLobby.csproj -c Release -r linux-x64 --self-contained -o pub/linux
+```
+
+Eski WPF uygulaması `Legacy/Wpf/` altında arşivlidir.
