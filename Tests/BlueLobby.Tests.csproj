@@ -4,21 +4,17 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>BlueLobby.Tests</AssemblyName>
     <RootNamespace>BlueLobby.Tests</RootNamespace>
   </PropertyGroup>
 
   <!--
-    Ana projeye ProjectReference yerine derlenmiş DLL referansı:
-    WPF FrameworkReference'i teste akmaz, testler Linux/macOS'ta da koşar.
-    Önce ana projeyi derleyin:
-      dotnet build BlueLobby.csproj -c Release
+    Core kütüphanesine ProjectReference: UI bağımlılığı teste akmaz,
+    testler Windows ve Linux'ta aynen koşar.
   -->
   <ItemGroup>
-    <Reference Include="BlueLobby">
-      <HintPath>..\bin\Release\net8.0-windows\BlueLobby.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
+    <ProjectReference Include="..\BlueLobby.Core\BlueLobby.Core.csproj" />
   </ItemGroup>
 
 </Project>
