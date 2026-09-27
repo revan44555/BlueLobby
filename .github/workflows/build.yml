@@ -1,4 +1,4 @@
-name: Build Steam Control Center EXE
+name: Build BlueLobby EXE
 
 on:
   push:
@@ -27,11 +27,11 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Restore
-        run: dotnet restore SteamLANControlCenter.csproj
+        run: dotnet restore BlueLobby.csproj
 
       - name: Publish EXE
         run: >
-          dotnet publish SteamLANControlCenter.csproj
+          dotnet publish BlueLobby.csproj
           -c Release
           -r win-x64
           --self-contained false
@@ -41,10 +41,10 @@ jobs:
       - name: Verify EXE
         shell: pwsh
         run: |
-          $exe = Join-Path $PWD "publish\SteamLANControlCenter.exe"
+          $exe = Join-Path $PWD "publish\BlueLobby.exe"
 
           if (-not (Test-Path $exe)) {
-              Write-Error "SteamLANControlCenter.exe bulunamadi."
+              Write-Error "BlueLobby.exe bulunamadi."
               exit 1
           }
 
@@ -64,9 +64,9 @@ jobs:
         with:
           tag_name: latest
           target_commitish: ${{ github.sha }}
-          name: Latest Build
+          name: Latest BlueLobby Build
           prerelease: true
-          files: publish/SteamLANControlCenter.exe
+          files: publish/BlueLobby.exe
           overwrite_files: true
           generate_release_notes: false
 
@@ -74,6 +74,7 @@ jobs:
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
         with:
-          files: publish/SteamLANControlCenter.exe
+          files: publish/BlueLobby.exe
           overwrite_files: true
           generate_release_notes: true
+          
