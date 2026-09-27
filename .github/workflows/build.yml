@@ -1,4 +1,4 @@
-name: Build BlueLobby EXE
+name: Build BlueLobby
 
 on:
   push:
@@ -6,58 +6,44 @@ on:
       - main
     tags:
       - "v*"
-
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build Windows EXE
-    runs-on: windows-latest
-
+  test:
+    name: Core Tests (Linux)
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "8.0.x"
+      - name: Run tests
+        run: dotnet run -c Release --project Tests/BlueLobby.Tests.csproj
 
-      - name: Restore
-        run: dotnet restore BlueLobby.csproj
-
-      - name: Publish EXE
+  build-windows:
+    name: Build Windows EXE
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+      - name: Publish win-x64
         run: >
-          dotnet publish BlueLobby.csproj
+          dotnet publish BlueLobby/BlueLobby.csproj
           -c Release
           -r win-x64
-          --self-contained false
-          -p:UseAppHost=true
+          --self-contained true
           -o publish
-
-      - name: Verify EXE
-        shell: pwsh
-        run: |
-          $exe = Join-Path $PWD "publish\BlueLobby.exe"
-
-          if (-not (Test-Path $exe)) {
-              Write-Error "BlueLobby.exe bulunamadi."
-              exit 1
-          }
-
-          $file = Get-Item $exe
-
-          Write-Host "================================"
-          Write-Host "EXE BASARIYLA OLUSTURULDU"
-          Write-Host "================================"
-          Write-Host "Dosya: $($file.Name)"
-          Write-Host "Boyut: $([math]::Round($file.Length / 1KB, 2)) KB"
-          Write-Host "Yol:   $($file.FullName)"
-          Write-Host "================================"
-
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluelobby-win-x64
+          path: publish/
       - name: Update Latest Build
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v3
@@ -69,7 +55,6 @@ jobs:
           files: publish/BlueLobby.exe
           overwrite_files: true
           generate_release_notes: false
-
       - name: Create Versioned Release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
@@ -77,4 +62,35 @@ jobs:
           files: publish/BlueLobby.exe
           overwrite_files: true
           generate_release_notes: true
+
+  build-linux:
+    name: Build Linux Binary
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+      - name: Publish linux-x64
+        run: >
+          dotnet publish BlueLobby/BlueLobby.csproj
+          -c Release
+          -r linux-x64
+          --self-contained true
+          -o publish
+      - name: Make executable
+        run: chmod +x publish/BlueLobby
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluelobby-linux-x64
+          path: publish/
+      - name: Release Linux binary
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: publish/BlueLobby
+          overwrite_files: true
+          generate_release_notes: false
           
