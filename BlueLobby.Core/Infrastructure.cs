@@ -33,7 +33,7 @@ namespace BlueLobby.Core
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(destination) ?? Directory.GetCurrentDirectory());
                 UnixFileMode? unixMode = null;
-                if (!OperatingSystem.IsWindows())
+                if (OperatingSystem.IsLinux())
                 {
                     try { unixMode = File.GetUnixFileMode(source); } catch { }
                 }
@@ -45,7 +45,7 @@ namespace BlueLobby.Core
                     output.Flush(flushToDisk: true);
                 }
 
-                if (unixMode.HasValue)
+                if (unixMode.HasValue && OperatingSystem.IsLinux())
                 {
                     try { File.SetUnixFileMode(temp, unixMode.Value); } catch { }
                 }
