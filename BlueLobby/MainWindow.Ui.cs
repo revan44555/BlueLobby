@@ -436,7 +436,9 @@ namespace BlueLobby
             _chipEmu = Ui.ChipText(Loc.T("emu_missing"));
             _chipCompat = Ui.ChipText("Uyumluluk: --");
             _chipPing = Ui.ChipText("Ping: -- ms");
-            // Sidebar ve durum kartı ayrı TextBlock örnekleri kullanmalı; Avalonia bir visual\n            // elementin aynı anda iki parent altında bulunmasına izin vermez.\n            _chipVpn = Ui.ChipText("VPN: --");
+            // Sidebar ve durum kartı ayrı TextBlock örnekleri kullanmalı; Avalonia bir visual
+            // elementin aynı anda iki parent altında bulunmasına izin vermez.
+            _chipVpn = Ui.ChipText("VPN: --");
 
             var statusWrap = new WrapPanel { Orientation = Orientation.Horizontal };
             statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_patch"), _chipPatch, Loc.T("status_patch_detail")));
