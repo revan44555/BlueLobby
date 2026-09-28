@@ -287,7 +287,9 @@ namespace BlueLobby
                     {
                         SetChip(_chipCompat, "Uyumluluk: --", Ui.Brush(Ui.C.Muted));
                     }
-                    SetChip(_chipVpn, vpnActive ? $"🟢 VPN: {(vpnIp ?? Loc.T("radmin_check"))}" : "🔴 VPN: Bulunamadı / Kapalı", vpnActive ? Ui.Ok : Ui.Err);
+                    string vpnStatusText = vpnActive ? $"🟢 VPN: {(vpnIp ?? Loc.T("radmin_check"))}" : "🔴 VPN: Bulunamadı / Kapalı";
+                    SetChip(_chipVpn, vpnStatusText, vpnActive ? Ui.Ok : Ui.Err);
+                    SetChip(_sidebarVpnChip, vpnStatusText, vpnActive ? Ui.Ok : Ui.Err);
                     SetChip(_chipPing, pingText, pingBrush);
                     SetChip(_chipEmu, emuText, emuBrush);
                     SetChip(_chipPatch, patchText, patchBrush);
