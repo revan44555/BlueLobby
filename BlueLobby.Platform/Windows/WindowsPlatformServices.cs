@@ -32,9 +32,9 @@ namespace BlueLobby.Platform.Windows
                 var roots = new List<string>();
                 string? programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
                 string? programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-                AddSteamRoot(roots, ReadRegistrySteamPath(Registry.CurrentUser, @"Software\Valve\Steam"));
-                AddSteamRoot(roots, ReadRegistrySteamPath(Registry.LocalMachine, @"SOFTWARE\Valve\Steam"));
-                AddSteamRoot(roots, ReadRegistrySteamPath(Registry.LocalMachine, @"SOFTWARE\WOW6432Node\Valve\Steam"));
+                AddSteamRoot(roots, ReadRegistrySteamPath(Registry.CurrentUser, @"SoftwareValveSteam"));
+                AddSteamRoot(roots, ReadRegistrySteamPath(Registry.LocalMachine, @"SOFTWAREValveSteam"));
+                AddSteamRoot(roots, ReadRegistrySteamPath(Registry.LocalMachine, @"SOFTWAREWOW6432NodeValveSteam"));
                 AddSteamRoot(roots, Path.Combine(programFiles ?? string.Empty, "Steam"));
                 AddSteamRoot(roots, Path.Combine(programFilesX86 ?? string.Empty, "Steam"));
                 return roots;
@@ -59,7 +59,20 @@ namespace BlueLobby.Platform.Windows
                 try
                 {
                     string full = Path.GetFullPath(path);
-                    if (Directory.Exists(full) && !roots.Contains(full, StringComparer.OrdinalIgnoreCase)) roots.Add(full);
+                    bool alreadyPresent = false;
+                    foreach (string existing in roots)
+                    {
+                        if (string.Equals(existing, full, StringComparison.OrdinalIgnoreCase))
+                        {
+                            alreadyPresent = true;
+                            break;
+                        }
+                    }
+
+                    if (Directory.Exists(full) && !alreadyPresent)
+                    {
+                        roots.Add(full);
+                    }
                 }
                 catch { }
             }
@@ -110,6 +123,7 @@ namespace BlueLobby.Platform.Windows
             }
             return Task.FromResult(false);
         }
+
         public IPlatformPaths Paths => _paths;
 
         public async Task<bool> EnsureFirewallRuleAsync(string exePath, string ruleName)
