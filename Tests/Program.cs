@@ -404,8 +404,13 @@ namespace BlueLobby.Tests
                 File.WriteAllBytes(exe, BuildPe(0x8664));
                 var service = new BlueLobby.Platform.Linux.LinuxPlatformServices();
                 await service.LaunchGameAsync(exe, temp, 480);
-                for (int i = 0; i < 20 && !File.Exists(marker); i++) await Task.Delay(25);
-                Check("Linux Proton launch Steam AppID kullanır", File.Exists(marker) && File.ReadAllText(marker).Contains("-applaunch 480", StringComparison.Ordinal));
+                // CI runner'larda Process.Start sonrası shell shim'inin başlaması 500 ms'yi aşabilir.
+                // Launcher davranışını test ederken kısa süreli timing flakiness oluşturmamak için
+                // marker dosyasını makul bir timeout içinde bekliyoruz.
+                for (int i = 0; i < 100 && !File.Exists(marker); i++) await Task.Delay(50);
+                bool markerOk = File.Exists(marker) &&
+                    File.ReadAllText(marker).Contains("-applaunch 480", StringComparison.Ordinal);
+                Check("Linux Proton launch Steam AppID kullanır", markerOk);
             }
             finally
             {
