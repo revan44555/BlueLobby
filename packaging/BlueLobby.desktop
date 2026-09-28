@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=BlueLobby
+Comment=Windows/Linux local network game session helper
+Exec=BlueLobby
+Icon=bluelobby
+Terminal=false
+Categories=Game;Utility;
+StartupNotify=true
