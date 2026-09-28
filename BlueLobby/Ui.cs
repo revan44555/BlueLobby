@@ -128,6 +128,69 @@ namespace BlueLobby
             FontWeight = FontWeight.Medium,
         };
 
+        public static Border StatusTile(string label, TextBlock value, string detail)
+        {
+            value.FontSize = 17;
+            value.FontWeight = FontWeight.Bold;
+            value.Foreground = Brush(C.Muted);
+
+            var body = new StackPanel { Spacing = 5 };
+            body.Children.Add(new TextBlock
+            {
+                Text = label.ToUpperInvariant(),
+                Foreground = Brush(C.Muted),
+                FontSize = 9.5,
+                FontWeight = FontWeight.SemiBold,
+                Opacity = 0.78,
+            });
+            body.Children.Add(value);
+            body.Children.Add(new TextBlock
+            {
+                Text = detail,
+                Foreground = Brush(C.Muted),
+                FontSize = 10.5,
+                TextWrapping = TextWrapping.Wrap,
+                Opacity = 0.82,
+            });
+
+            return new Border
+            {
+                Background = Brush(C.Surface),
+                BorderBrush = Brush(C.Border),
+                BorderThickness = new Thickness(1),
+                CornerRadius = CardRadius,
+                Padding = new Thickness(13, 12),
+                Margin = new Thickness(0, 0, 8, 8),
+                Width = TouchMode ? 220 : 185,
+                Child = body,
+            };
+        }
+
+        public static Border FieldCard(string label, Control control)
+        {
+            var body = new StackPanel { Spacing = 6 };
+            body.Children.Add(new TextBlock
+            {
+                Text = label,
+                Foreground = Brush(C.Muted),
+                FontSize = 11.5,
+                FontWeight = FontWeight.SemiBold,
+            });
+            body.Children.Add(control);
+
+            return new Border
+            {
+                Background = Brush(C.Surface),
+                BorderBrush = Brush(C.Border),
+                BorderThickness = new Thickness(1),
+                CornerRadius = BadgeRadius,
+                Padding = new Thickness(11, 10),
+                Margin = new Thickness(0, 0, 8, 8),
+                Width = TouchMode ? 300 : 250,
+                Child = body,
+            };
+        }
+
         public static Control FieldRow(string label, Control control, double labelWidth = 0)
         {
             if (labelWidth <= 0) labelWidth = FieldLabelWidth;
