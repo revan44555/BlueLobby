@@ -65,7 +65,14 @@ dotnet run --project Tests/BlueLobby.Tests.csproj -c Release
 
 ## Dağıtım
 
-CI, Windows ve Linux için self-contained single-file paketleri ZIP/TAR.GZ olarak üretir; SHA-256 checksum dosyaları ve GitHub artifact provenance attestations yayımlar.
+CI, kullanıcıya uygun tek dosyalık paketleri ve teknik fallback arşivlerini üretir:
+
+- Windows: `BlueLobby-Setup.exe` — çift tıklayıp kurulum yapılır, Başlat menüsü kısayolu oluşturulabilir.
+- Linux: `BlueLobby.AppImage` — kurulum paketi yerine tek dosyalık çalıştırılabilir uygulama olarak dağıtılır.
+- Fallback: `BlueLobby-win-x64.zip` ve `BlueLobby-linux-x64.tar.gz`.
+- Her paket için SHA-256 checksum ve GitHub artifact provenance attestation yayımlanır.
+
+Windows installer kullanıcı profilindeki uygulamalar dizinine kurulur; sistem geneline admin yetkisi gerektirmez. Uygulamanın kendi çalışma sırasında gerekli Windows izinleri ayrıca yönetilir.
 
 `Legacy/Wpf/` eski WPF implementasyonunu arşiv olarak içerir; aktif uygulama Avalonia tabanlıdır.
 
