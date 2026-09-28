@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BlueLobby.Core</AssemblyName>
+    <RootNamespace>BlueLobby.Core</RootNamespace>
+    <Description>BlueLobby platform-independent core: models, patch engine, backup/restore.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueLobby.Platform\BlueLobby.Platform.csproj" />
+  </ItemGroup>
+
+</Project>

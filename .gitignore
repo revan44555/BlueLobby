@@ -1,0 +1,12 @@
+bin/
+obj/
+publish/
+pub/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.tmp
+*.log
+BlueLobby/A
