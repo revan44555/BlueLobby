@@ -131,6 +131,7 @@ jobs:
           mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
           cp publish/linux-x64/BlueLobby AppDir/usr/bin/BlueLobby
           cp packaging/BlueLobby.desktop AppDir/BlueLobby.desktop
+          cp packaging/bluelobby.svg AppDir/bluelobby.svg
           cp packaging/bluelobby.svg AppDir/usr/share/icons/hicolor/scalable/apps/bluelobby.svg
           cp packaging/AppRun AppDir/AppRun
           chmod +x AppDir/usr/bin/BlueLobby AppDir/AppRun
