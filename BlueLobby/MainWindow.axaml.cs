@@ -457,6 +457,7 @@ namespace BlueLobby
             }
 
             _gameDir = root;
+            UpdateSidebarTarget(root);
             if (_txtGameDir != null) _txtGameDir.Text = root;
             if (_cmbExes != null) _cmbExes.Items.Clear();
             _exePath = string.Empty;
