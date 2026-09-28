@@ -37,7 +37,6 @@ namespace BlueLobby
         private readonly List<Border> _themedBorders = new();
         private TranslateTransform? _mascotTransform;
         private DispatcherTimer? _mascotTimer;
-        private int _mascotTick;
 
         // ---- Oyun bölümü ----
         private TextBox? _txtGameDir;
