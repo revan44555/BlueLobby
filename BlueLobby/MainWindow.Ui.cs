@@ -51,6 +51,7 @@ namespace BlueLobby
         private CheckBox? _chkCustomBroadcast;
         private CheckBox? _chkFirewall;
         private TextBlock? _chipVpn;
+        private TextBlock? _sidebarVpnChip;
         private TextBlock? _chipPing;
         private TextBlock? _chipEmu;
         private TextBlock? _chipPatch;
@@ -113,7 +114,7 @@ namespace BlueLobby
             sideStatus.Children.Add(statusDot);
             sideStatus.Children.Add(statusLabel);
 
-            _chipVpn = Ui.ChipText("VPN: --");
+            _sidebarVpnChip = Ui.ChipText("VPN: --");
 
             var sidebarPanel = new StackPanel { Margin = new Avalonia.Thickness(18, 20, 18, 18), Spacing = 4 };
             var brandRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
@@ -160,7 +161,7 @@ namespace BlueLobby
             };
             var footerStack = new StackPanel { Spacing = 9 };
             footerStack.Children.Add(sideStatus);
-            footerStack.Children.Add(Ui.Chip(_chipVpn));
+            footerStack.Children.Add(Ui.Chip(_sidebarVpnChip));
             footerStack.Children.Add(new TextBlock
             {
                 Text = Loc.T("active_target"),
@@ -435,7 +436,7 @@ namespace BlueLobby
             _chipEmu = Ui.ChipText(Loc.T("emu_missing"));
             _chipCompat = Ui.ChipText("Uyumluluk: --");
             _chipPing = Ui.ChipText("Ping: -- ms");
-            _chipVpn = _chipVpn ?? Ui.ChipText("VPN: --");
+            // Sidebar ve durum kartı ayrı TextBlock örnekleri kullanmalı; Avalonia bir visual\n            // elementin aynı anda iki parent altında bulunmasına izin vermez.\n            _chipVpn = Ui.ChipText("VPN: --");
 
             var statusWrap = new WrapPanel { Orientation = Orientation.Horizontal };
             statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_patch"), _chipPatch, Loc.T("status_patch_detail")));
