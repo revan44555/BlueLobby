@@ -116,7 +116,7 @@ namespace BlueLobby.Core
             {
                 foreach (string child in EnumerateCandidateSubdirectories(baseDir!, 2, 80))
                 {
-                    string leaf = Path.GetFileName(child);
+                    string leaf = Path.GetFileName(child) ?? string.Empty;
                     int score = 500;
                     if (IsPreferredRuntimeSegment(leaf)) score += 120;
                     if (IsExcludedRuntimeSegment(child)) score -= 300;
