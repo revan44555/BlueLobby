@@ -375,7 +375,7 @@ namespace BlueLobby
 
         private async void Window_Drop(object? sender, DragEventArgs e)
         {
-            var items = e.Data.GetFiles()?.ToList();
+            var items = e.DataTransfer.TryGetFiles()?.ToList();
             if (items == null || items.Count != 1) return;
 
             string path = items[0].Path.LocalPath;
