@@ -65,20 +65,34 @@ jobs:
           --self-contained true
           -p:PublishSingleFile=true
           -o publish/win-x64
-      - name: Package
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress --yes
+          & "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe" installer\BlueLobby.iss
+          if (-not (Test-Path BlueLobby-Setup.exe)) { throw "BlueLobby-Setup.exe was not created." }
+      - name: Package portable Windows build
         shell: pwsh
         run: |
           Compress-Archive -Path publish/win-x64/* -DestinationPath BlueLobby-win-x64.zip -Force
-          $hash = (Get-FileHash BlueLobby-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  BlueLobby-win-x64.zip" | Set-Content -NoNewline BlueLobby-win-x64.sha256
-      - name: Generate artifact attestation
+          $zipHash = (Get-FileHash BlueLobby-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$zipHash  BlueLobby-win-x64.zip" | Set-Content -NoNewline BlueLobby-win-x64.sha256
+          $setupHash = (Get-FileHash BlueLobby-Setup.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$setupHash  BlueLobby-Setup.exe" | Set-Content -NoNewline BlueLobby-Setup.sha256
+      - name: Generate ZIP attestation
         uses: actions/attest@v4
         with:
           subject-path: BlueLobby-win-x64.zip
+      - name: Generate installer attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: BlueLobby-Setup.exe
       - uses: actions/upload-artifact@v6
         with:
           name: bluelobby-win-x64
           path: |
+            BlueLobby-Setup.exe
+            BlueLobby-Setup.sha256
             BlueLobby-win-x64.zip
             BlueLobby-win-x64.sha256
           if-no-files-found: error
@@ -104,19 +118,41 @@ jobs:
           --self-contained true
           -p:PublishSingleFile=true
           -o publish/linux-x64
-      - name: Package
+      - name: Package Linux TAR.GZ
         run: |
           chmod +x publish/linux-x64/BlueLobby
           tar -C publish/linux-x64 -czf BlueLobby-linux-x64.tar.gz .
           sha256sum BlueLobby-linux-x64.tar.gz > BlueLobby-linux-x64.sha256
-      - name: Generate artifact attestation
+      - name: Build Linux AppImage
+        shell: bash
+        run: |
+          rm -rf AppDir appimagetool.AppImage BlueLobby.AppImage
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
+          cp publish/linux-x64/BlueLobby AppDir/usr/bin/BlueLobby
+          cp packaging/BlueLobby.desktop AppDir/BlueLobby.desktop
+          cp packaging/bluelobby.svg AppDir/usr/share/icons/hicolor/scalable/apps/bluelobby.svg
+          cp packaging/AppRun AppDir/AppRun
+          chmod +x AppDir/usr/bin/BlueLobby AppDir/AppRun
+          curl -L --fail --retry 3 -o appimagetool.AppImage             https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool.AppImage
+          ./appimagetool.AppImage --appimage-extract-and-run AppDir BlueLobby.AppImage
+          chmod +x BlueLobby.AppImage
+          sha256sum BlueLobby.AppImage > BlueLobby.AppImage.sha256
+      - name: Generate TAR.GZ attestation
         uses: actions/attest@v4
         with:
           subject-path: BlueLobby-linux-x64.tar.gz
+      - name: Generate AppImage attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: BlueLobby.AppImage
       - uses: actions/upload-artifact@v6
         with:
           name: bluelobby-linux-x64
           path: |
+            BlueLobby.AppImage
+            BlueLobby.AppImage.sha256
             BlueLobby-linux-x64.tar.gz
             BlueLobby-linux-x64.sha256
           if-no-files-found: error
@@ -136,8 +172,12 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
+            release/bluelobby-win-x64/BlueLobby-Setup.exe
+            release/bluelobby-win-x64/BlueLobby-Setup.sha256
             release/bluelobby-win-x64/BlueLobby-win-x64.zip
             release/bluelobby-win-x64/BlueLobby-win-x64.sha256
+            release/bluelobby-linux-x64/BlueLobby.AppImage
+            release/bluelobby-linux-x64/BlueLobby.AppImage.sha256
             release/bluelobby-linux-x64/BlueLobby-linux-x64.tar.gz
             release/bluelobby-linux-x64/BlueLobby-linux-x64.sha256
           generate_release_notes: true
