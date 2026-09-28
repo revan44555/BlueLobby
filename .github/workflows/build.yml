@@ -3,7 +3,7 @@ name: BlueLobby CI
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ['v*', 'V*']
   pull_request:
   workflow_dispatch:
 
@@ -58,10 +58,11 @@ jobs:
       - name: Package
         shell: pwsh
         run: Compress-Archive -Path publish/win-x64/* -DestinationPath BlueLobby-win-x64.zip -Force
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: bluelobby-win-x64
           path: BlueLobby-win-x64.zip
+          if-no-files-found: error
 
   build-linux:
     name: Publish Linux x64
@@ -88,14 +89,17 @@ jobs:
         with:
           name: bluelobby-linux-x64
           path: BlueLobby-linux-x64.tar.gz
+          if-no-files-found: error
 
   release:
     name: GitHub Release
     if: github.ref_type == 'tag'
     needs: [build-windows, build-linux]
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           path: release
       - name: Release
