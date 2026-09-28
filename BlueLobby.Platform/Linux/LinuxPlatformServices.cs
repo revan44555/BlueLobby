@@ -55,7 +55,7 @@ namespace BlueLobby.Platform.Linux
             }
         }
 
-        private static readonly string[] VpnInterfaceKeywords = { "tailscale", "zerotier", "hamachi", "wireguard", "netbird" }
+        private static readonly string[] VpnInterfaceKeywords = { "tailscale", "zerotier", "hamachi", "wireguard", "netbird" };
 
         private readonly LinuxPaths _paths = new();
 
