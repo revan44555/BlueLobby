@@ -41,3 +41,12 @@ The supplied execution environment does not contain the .NET SDK and outbound pa
 ## UI validation
 
 Static UI checks completed for v4.3.0. The updated UI remains Windows/Linux desktop-only and preserves the existing event handlers and patch/restore entry points.
+
+
+## 2026-09-28 Hardening recheck
+
+- PatchEngine firewall operations use an end-to-end awaitable flow; sync-over-async calls were removed.
+- Windows/Linux VPN detection is tied to recognized interfaces and validated address ranges.
+- A separate xUnit.net v3 unit-test layer complements the existing integration test executable.
+- Release packages now publish SHA-256 checksum files and GitHub artifact provenance attestations.
+- UpdateChecker remains inert while URLs are empty; if enabled later, remote/update targets must be HTTPS.

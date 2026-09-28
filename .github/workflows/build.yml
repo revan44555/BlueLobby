@@ -20,8 +20,12 @@ jobs:
         run: dotnet restore BlueLobby.sln
       - name: Build
         run: dotnet build BlueLobby.sln -c Release --no-restore
-      - name: Run tests
+      - name: Build unit tests
+        run: dotnet build Tests.Unit/BlueLobby.UnitTests.csproj -c Release --no-restore
+      - name: Run integration tests
         run: dotnet run --project Tests/BlueLobby.Tests.csproj -c Release --no-build
+      - name: Run unit tests
+        run: dotnet run --project Tests.Unit/BlueLobby.UnitTests.csproj -c Release --no-build
 
   test-windows:
     name: Windows Integration Tests
@@ -35,11 +39,19 @@ jobs:
         run: dotnet restore BlueLobby.sln
       - name: Build
         run: dotnet build BlueLobby.sln -c Release --no-restore
-      - name: Run tests
+      - name: Build unit tests
+        run: dotnet build Tests.Unit/BlueLobby.UnitTests.csproj -c Release --no-restore
+      - name: Run integration tests
         run: dotnet run --project Tests/BlueLobby.Tests.csproj -c Release --no-build
+      - name: Run unit tests
+        run: dotnet run --project Tests.Unit/BlueLobby.UnitTests.csproj -c Release --no-build
 
   build-windows:
     name: Publish Windows x64
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     needs: [test, test-windows]
     runs-on: windows-latest
     steps:
@@ -57,15 +69,28 @@ jobs:
           -o publish/win-x64
       - name: Package
         shell: pwsh
-        run: Compress-Archive -Path publish/win-x64/* -DestinationPath BlueLobby-win-x64.zip -Force
+        run: |
+          Compress-Archive -Path publish/win-x64/* -DestinationPath BlueLobby-win-x64.zip -Force
+          $hash = (Get-FileHash BlueLobby-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  BlueLobby-win-x64.zip" | Set-Content -NoNewline BlueLobby-win-x64.sha256
+      - name: Generate artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: BlueLobby-win-x64.zip
       - uses: actions/upload-artifact@v6
         with:
           name: bluelobby-win-x64
-          path: BlueLobby-win-x64.zip
+          path: |
+            BlueLobby-win-x64.zip
+            BlueLobby-win-x64.sha256
           if-no-files-found: error
 
   build-linux:
     name: Publish Linux x64
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     needs: [test, test-windows]
     runs-on: ubuntu-latest
     steps:
@@ -85,10 +110,17 @@ jobs:
         run: |
           chmod +x publish/linux-x64/BlueLobby
           tar -C publish/linux-x64 -czf BlueLobby-linux-x64.tar.gz .
+          sha256sum BlueLobby-linux-x64.tar.gz > BlueLobby-linux-x64.sha256
+      - name: Generate artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: BlueLobby-linux-x64.tar.gz
       - uses: actions/upload-artifact@v6
         with:
           name: bluelobby-linux-x64
-          path: BlueLobby-linux-x64.tar.gz
+          path: |
+            BlueLobby-linux-x64.tar.gz
+            BlueLobby-linux-x64.sha256
           if-no-files-found: error
 
   release:
@@ -107,7 +139,9 @@ jobs:
         with:
           files: |
             release/bluelobby-win-x64/BlueLobby-win-x64.zip
+            release/bluelobby-win-x64/BlueLobby-win-x64.sha256
             release/bluelobby-linux-x64/BlueLobby-linux-x64.tar.gz
+            release/bluelobby-linux-x64/BlueLobby-linux-x64.sha256
           generate_release_notes: true
           overwrite_files: true
           fail_on_unmatched_files: true

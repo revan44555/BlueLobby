@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -54,7 +55,7 @@ namespace BlueLobby.Platform.Linux
             }
         }
 
-        private static readonly string[] VpnInterfaceKeywords = { "tailscale", "zerotier", "zt", "hamachi", "wireguard", "wg" };
+        private static readonly string[] VpnInterfaceKeywords = { "tailscale", "zerotier", "hamachi", "wireguard", "netbird" }
 
         private readonly LinuxPaths _paths = new();
 
@@ -171,16 +172,8 @@ namespace BlueLobby.Platform.Linux
 
         public string? GetVpnIpv4()
         {
-            foreach (string ipv4 in EnumerateVpnIpv4())
-            {
-                // Tailscale 100.64.0.0/10, ZeroTier 10.x, Hamachi 25.x/5.x blokları
-                if (ipv4.StartsWith("100.", StringComparison.Ordinal) ||
-                    ipv4.StartsWith("10.", StringComparison.Ordinal) ||
-                    ipv4.StartsWith("25.", StringComparison.Ordinal))
-                {
-                    return ipv4;
-                }
-            }
+            foreach ((string ipv4, string interfaceText) in EnumerateVpnIpv4())
+                if (IsSupportedVpnIpv4(ipv4, interfaceText)) return ipv4;
             return null;
         }
 
@@ -188,52 +181,46 @@ namespace BlueLobby.Platform.Linux
         {
             var names = new List<string>();
             foreach (NetworkInterface nic in SafeGetInterfaces())
-            {
-                string text = $"{nic.Name} {nic.Description}".ToLowerInvariant();
-                foreach (string keyword in VpnInterfaceKeywords)
-                {
-                    if (text.Contains(keyword))
-                    {
-                        names.Add(nic.Name);
-                        break;
-                    }
-                }
-            }
+                if (IsVpnInterface(nic)) names.Add(nic.Name);
             return names;
         }
 
-        private static IEnumerable<string> EnumerateVpnIpv4()
+        private static IEnumerable<(string Ipv4, string InterfaceText)> EnumerateVpnIpv4()
         {
             foreach (NetworkInterface nic in SafeGetInterfaces())
             {
-                if (nic.OperationalStatus != OperationalStatus.Up)
-                {
-                    continue;
-                }
-
+                if (nic.OperationalStatus != OperationalStatus.Up || !IsVpnInterface(nic)) continue;
                 string text = $"{nic.Name} {nic.Description}".ToLowerInvariant();
-                bool isVpn = false;
-                foreach (string keyword in VpnInterfaceKeywords)
-                {
-                    if (text.Contains(keyword))
-                    {
-                        isVpn = true;
-                        break;
-                    }
-                }
-                if (!isVpn)
-                {
-                    continue;
-                }
-
                 foreach (UnicastIPAddressInformation ip in nic.GetIPProperties().UnicastAddresses)
-                {
-                    if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        yield return ip.Address.ToString();
-                    }
-                }
+                    if (ip.Address.AddressFamily == AddressFamily.InterNetwork) yield return (ip.Address.ToString(), text);
             }
+        }
+
+        private static bool IsVpnInterface(NetworkInterface nic)
+        {
+            string name = nic.Name.ToLowerInvariant();
+            string text = $"{name} {nic.Description}".ToLowerInvariant();
+            return text.Contains("tailscale", StringComparison.Ordinal) ||
+                   text.Contains("zerotier", StringComparison.Ordinal) ||
+                   name.StartsWith("zt", StringComparison.Ordinal) ||
+                   text.Contains("hamachi", StringComparison.Ordinal) ||
+                   text.Contains("wireguard", StringComparison.Ordinal) ||
+                   name.StartsWith("wg", StringComparison.Ordinal) ||
+                   text.Contains("netbird", StringComparison.Ordinal) ||
+                   name.StartsWith("wt", StringComparison.Ordinal);
+        }
+
+        private static bool IsSupportedVpnIpv4(string ipv4, string interfaceText)
+        {
+            if (!IPAddress.TryParse(ipv4, out IPAddress? address) || address.AddressFamily != AddressFamily.InterNetwork) return false;
+            byte[] b=address.GetAddressBytes();
+            bool tailscale=b[0]==100 && b[1]>=64 && b[1]<=127;
+            bool privateRange=b[0]==10 || (b[0]==172 && b[1]>=16 && b[1]<=31) || (b[0]==192 && b[1]==168);
+            if(interfaceText.Contains("tailscale",StringComparison.Ordinal)) return tailscale;
+            if(interfaceText.Contains("zerotier",StringComparison.Ordinal)) return b[0]==10;
+            if(interfaceText.Contains("hamachi",StringComparison.Ordinal)) return b[0]==25;
+            if(interfaceText.Contains("wireguard",StringComparison.Ordinal)||interfaceText.Contains("netbird",StringComparison.Ordinal)||interfaceText.Contains(" wg",StringComparison.Ordinal)) return privateRange||tailscale;
+            return false;
         }
 
         private static NetworkInterface[] SafeGetInterfaces()

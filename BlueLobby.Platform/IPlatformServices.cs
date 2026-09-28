@@ -19,10 +19,10 @@ namespace BlueLobby.Platform
         /// <summary>Oyun çalıştırılabilir dosyasını başlatır. Windows'ta normal kullanıcı bağlamını tercih eder.</summary>
         Task LaunchGameAsync(string exePath, string gameDir, int? steamAppId = null);
 
-        /// <summary>VPN istemcisi aktif mi? (Windows: Radmin; Linux: Tailscale/ZeroTier)</summary>
+        /// <summary>VPN arayüzü aktif mi? Platforma göre Radmin, Tailscale, ZeroTier, Hamachi, WireGuard veya NetBird.</summary>
         Task<bool> IsVpnActiveAsync();
 
-        /// <summary>VPN ağ arabiriminden IPv4 adresi; yoksa null. (Windows: 26.x Radmin; Linux: Tailscale 100.x / ZeroTier 10.x)</summary>
+        /// <summary>Desteklenen VPN arayüzünden doğrulanmış IPv4 adresi; yoksa null.</summary>
         string? GetVpnIpv4();
 
         /// <summary>Uygulamanın yükseltilmiş yetkiyle çalışıp çalışmadığı. Linux'ta kavram yok (her zaman true).</summary>

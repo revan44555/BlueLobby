@@ -65,7 +65,7 @@ dotnet run --project Tests/BlueLobby.Tests.csproj -c Release
 
 ## Dağıtım
 
-CI, Windows ve Linux için self-contained single-file paketleri ZIP/TAR.GZ olarak üretir ve SHA-256 checksum yayımlar.
+CI, Windows ve Linux için self-contained single-file paketleri ZIP/TAR.GZ olarak üretir; SHA-256 checksum dosyaları ve GitHub artifact provenance attestations yayımlar.
 
 `Legacy/Wpf/` eski WPF implementasyonunu arşiv olarak içerir; aktif uygulama Avalonia tabanlıdır.
 

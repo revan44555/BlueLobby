@@ -55,7 +55,7 @@ namespace BlueLobby.Core
             try
             {
                 using IDisposable processLock = _store.AcquireGameLock(gameDir, TimeSpan.FromSeconds(15));
-                return await Task.Run(() => ApplyCore(gameDir, exePath, buffers, options, addFirewallRule, reporter, ct), ct).ConfigureAwait(false);
+                return await Task.Run(() => ApplyCoreAsync(gameDir, exePath, buffers, options, addFirewallRule, reporter, ct), ct).ConfigureAwait(false);
             }
             finally
             {
@@ -63,7 +63,7 @@ namespace BlueLobby.Core
             }
         }
 
-        private PatchManifest ApplyCore(
+        private async Task<PatchManifest> ApplyCoreAsync(
             string gameDir,
             string exePath,
             IReadOnlyList<(ApiDllTarget Target, byte[] Bytes)> buffers,
@@ -104,7 +104,7 @@ namespace BlueLobby.Core
                         // eski backup'ı yeni baseline olarak kullanma. Yeni transaction kendi backup'ını üretir.
                         if (previousManifest.FirewallRuleCreatedByUs && !string.IsNullOrWhiteSpace(previousManifest.FirewallRuleName))
                         {
-                            bool removed = _platform.RemoveFirewallRuleAsync(previousManifest.FirewallRuleName).GetAwaiter().GetResult();
+                            bool removed = await _platform.RemoveFirewallRuleAsync(previousManifest.FirewallRuleName).ConfigureAwait(false);
                             if (!removed) throw new IOException("Eski BlueLobby firewall kuralı güvenli biçimde kaldırılamadı.");
                         }
                         CleanupBackupArtifacts(previousManifest);
@@ -153,7 +153,7 @@ namespace BlueLobby.Core
                         manifest.FirewallRuleCreatedByUs = true;
                         // Side-effect'ten önce intent'i kalıcılaştır. Crash olursa recovery bu adı siler.
                         _store.SaveManifest(manifest);
-                        bool created = _platform.EnsureFirewallRuleAsync(manifest.ExePath, ruleName).GetAwaiter().GetResult();
+                        bool created = await _platform.EnsureFirewallRuleAsync(manifest.ExePath, ruleName).ConfigureAwait(false);
                         if (!created) throw new IOException("Güvenlik duvarı kuralı oluşturulamadı.");
                     }
                     else
@@ -172,7 +172,7 @@ namespace BlueLobby.Core
             catch
             {
                 // Kullanıcı iptal etse bile rollback iptal edilemez; aksi halde transaction yarım kalabilir.
-                TryRollbackAfterFailure(manifest, CancellationToken.None, reporter);
+                await TryRollbackAfterFailureAsync(manifest, CancellationToken.None, reporter).ConfigureAwait(false);
                 throw;
             }
         }
@@ -377,14 +377,14 @@ namespace BlueLobby.Core
             }
         }
 
-        private void TryRollbackAfterFailure(PatchManifest manifest, CancellationToken ct, IProgress<string>? reporter)
+        private async Task TryRollbackAfterFailureAsync(PatchManifest manifest, CancellationToken ct, IProgress<string>? reporter)
         {
             try
             {
                 manifest.State = PatchTransactionState.RollingBack;
                 _store.SaveManifest(manifest);
                 reporter?.Report("Hata oluştu; transaction geri alınıyor...");
-                RollbackCore(manifest, ct, reporter);
+                await RollbackCoreAsync(manifest, ct, reporter).ConfigureAwait(false);
                 manifest.State = PatchTransactionState.RolledBack;
                 _store.SaveManifest(manifest);
                 CleanupBackupArtifacts(manifest);
@@ -405,7 +405,7 @@ namespace BlueLobby.Core
             }
         }
 
-        private void RollbackCore(PatchManifest manifest, CancellationToken ct, IProgress<string>? reporter)
+        private async Task RollbackCoreAsync(PatchManifest manifest, CancellationToken ct, IProgress<string>? reporter)
         {
             foreach (PatchEntry entry in manifest.Entries.AsEnumerable().Reverse())
             {
@@ -469,7 +469,7 @@ namespace BlueLobby.Core
 
             if (manifest.FirewallRuleCreatedByUs && !string.IsNullOrWhiteSpace(manifest.FirewallRuleName))
             {
-                bool removed = _platform.RemoveFirewallRuleAsync(manifest.FirewallRuleName).GetAwaiter().GetResult();
+                bool removed = await _platform.RemoveFirewallRuleAsync(manifest.FirewallRuleName).ConfigureAwait(false);
                 if (!removed) throw new IOException("Firewall rollback tamamlanamadı.");
             }
         }
@@ -484,7 +484,7 @@ namespace BlueLobby.Core
             try
             {
                 using IDisposable processLock = _store.AcquireGameLock(gameDir, TimeSpan.FromSeconds(15));
-                return await Task.Run(() => RestoreCore(gameDir, manifest, reporter, ct), ct).ConfigureAwait(false);
+                return await Task.Run(() => RestoreCoreAsync(gameDir, manifest, reporter, ct), ct).ConfigureAwait(false);
             }
             finally
             {
@@ -492,7 +492,7 @@ namespace BlueLobby.Core
             }
         }
 
-        private RestoreResult RestoreCore(string gameDir, PatchManifest manifest, IProgress<(double Percent, string Message)>? reporter, CancellationToken ct)
+        private async Task<RestoreResult> RestoreCoreAsync(string gameDir, PatchManifest manifest, IProgress<(double Percent, string Message)>? reporter, CancellationToken ct)
         {
             if (manifest == null) throw new ArgumentNullException(nameof(manifest));
             string root = PathSafety.Canonicalize(gameDir);
@@ -540,7 +540,7 @@ namespace BlueLobby.Core
                 if (manifest.FirewallRuleCreatedByUs && !string.IsNullOrWhiteSpace(manifest.FirewallRuleName))
                 {
                     reporter?.Report((88, "Firewall kuralı kaldırılıyor..."));
-                    result.FirewallRuleRemoved = _platform.RemoveFirewallRuleAsync(manifest.FirewallRuleName).GetAwaiter().GetResult();
+                    result.FirewallRuleRemoved = await _platform.RemoveFirewallRuleAsync(manifest.FirewallRuleName).ConfigureAwait(false);
                     if (!result.FirewallRuleRemoved) throw new IOException("BlueLobby tarafından oluşturulan firewall kuralı kaldırılamadı.");
                 }
 
@@ -726,7 +726,7 @@ namespace BlueLobby.Core
                     case PatchTransactionState.RollingBack:
                         manifest.State = PatchTransactionState.RollingBack;
                         _store.SaveManifest(manifest);
-                        RollbackCore(manifest, CancellationToken.None, null);
+                        await RollbackCoreAsync(manifest, CancellationToken.None, null).ConfigureAwait(false);
                         manifest.State = PatchTransactionState.RolledBack;
                         _store.SaveManifest(manifest);
                         CleanupBackupArtifacts(manifest);
@@ -735,7 +735,7 @@ namespace BlueLobby.Core
                         return true;
 
                     case PatchTransactionState.Restoring:
-                        RestoreCore(root, manifest, reporter, CancellationToken.None);
+                        await RestoreCoreAsync(root, manifest, reporter, CancellationToken.None).ConfigureAwait(false);
                         return true;
 
                     case PatchTransactionState.RolledBack:
@@ -770,7 +770,7 @@ namespace BlueLobby.Core
 
                 current.State = PatchTransactionState.RollingBack;
                 _store.SaveManifest(current);
-                RollbackCore(current, CancellationToken.None, null);
+                await RollbackCoreAsync(current, CancellationToken.None, null).ConfigureAwait(false);
                 current.State = PatchTransactionState.RolledBack;
                 _store.SaveManifest(current);
                 CleanupBackupArtifacts(current);
