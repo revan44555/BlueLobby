@@ -170,13 +170,14 @@ namespace BlueLobby.Tests
             Check("Steam common kökü doğru normalize edilir", games.Any(g => Path.GetFullPath(g.InstallPath) == Path.GetFullPath(game)));
             Check("Steam VDF escaped value çözülür", games.Any(g => g.Name == "Example \"Game"));
 
-            string heroicConfig = Path.Combine(temp, "heroic", ".config", "legendary");
+            string xdgConfig = Path.Combine(temp, ".config");
+            string heroicConfig = Path.Combine(xdgConfig, "legendary");
             Directory.CreateDirectory(heroicConfig);
             string heroicGame = Path.Combine(temp, "Heroic Game");
             Directory.CreateDirectory(heroicGame);
             File.WriteAllText(Path.Combine(heroicConfig, "installed.json"), "{\"heroic.app\":{\"title\":\"Heroic Game\",\"install_path\":\"" + heroicGame.Replace("\\", "\\\\") + "\"}}");
 
-            string lutrisDir = Path.Combine(temp, "lutris", "games");
+            string lutrisDir = Path.Combine(xdgConfig, "lutris", "games");
             Directory.CreateDirectory(lutrisDir);
             string lutrisGame = Path.Combine(temp, "Lutris Game");
             Directory.CreateDirectory(lutrisGame);
@@ -184,10 +185,14 @@ namespace BlueLobby.Tests
             File.WriteAllText(lutrisExe, "placeholder");
             File.WriteAllText(Path.Combine(lutrisDir, "lutris-game.yml"), "name: Lutris Game\ngame:\n  exe: \"$GAMEDIR/game.exe\"\n  working_dir: $GAMEDIR\n  directory: \"" + lutrisGame.Replace("\\", "\\\\") + "\"\n");
 
+            string? previousXdgConfig = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+            Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", xdgConfig);
+
             IReadOnlyList<DiscoveredGame> launcherGames = new GameDiscoveryService(new FakePlatform(temp, common)).DiscoverAsync().GetAwaiter().GetResult();
             Check("Heroic installed.json keşfi", launcherGames.Any(g => g.Source == GameLibrarySource.Heroic && g.Name == "Heroic Game"));
             Check("Lutris nested game.exe keşfi", launcherGames.Any(g => g.Source == GameLibrarySource.Lutris && g.Name == "Lutris Game"));
             Check("Lutris executable metadata çözülür", launcherGames.Any(g => g.Source == GameLibrarySource.Lutris && g.ExecutablePath == lutrisExe));
+            Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", previousXdgConfig);
         }
 
         private static void TestManifestStore(string temp)
