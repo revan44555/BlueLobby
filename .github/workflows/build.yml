@@ -85,7 +85,7 @@ jobs:
         run: |
           chmod +x publish/linux-x64/BlueLobby
           tar -C publish/linux-x64 -czf BlueLobby-linux-x64.tar.gz .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: bluelobby-linux-x64
           path: BlueLobby-linux-x64.tar.gz
@@ -110,3 +110,4 @@ jobs:
             release/bluelobby-linux-x64/BlueLobby-linux-x64.tar.gz
           generate_release_notes: true
           overwrite_files: true
+          fail_on_unmatched_files: true
