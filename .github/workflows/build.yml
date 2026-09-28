@@ -125,6 +125,7 @@ jobs:
           -r linux-x64
           --self-contained true
           -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish/linux-x64
       - name: Package Linux TAR.GZ
         run: |
@@ -143,11 +144,25 @@ jobs:
           cp packaging/bluelobby.svg AppDir/usr/share/icons/hicolor/scalable/apps/bluelobby.svg
           cp packaging/AppRun AppDir/AppRun
           chmod +x AppDir/usr/bin/BlueLobby AppDir/AppRun
-          curl -L --fail --retry 3 -o appimagetool.AppImage             https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          curl -L --fail --retry 3 -o appimagetool.AppImage https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool.AppImage
           ./appimagetool.AppImage --appimage-extract-and-run AppDir BlueLobby.AppImage
           chmod +x BlueLobby.AppImage
           sha256sum BlueLobby.AppImage > BlueLobby.AppImage.sha256
+      - name: Smoke-test Linux AppImage
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          set +e
+          timeout --signal=TERM 20s xvfb-run -a ./BlueLobby.AppImage --appimage-extract-and-run
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            echo "Linux AppImage smoke test failed with exit code $status."
+            exit "$status"
+          fi
+          echo "Linux AppImage smoke test passed (process initialized under Xvfb)."
       - name: Generate TAR.GZ attestation
         uses: actions/attest@v4
         with:
