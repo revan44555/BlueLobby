@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -20,7 +21,7 @@ namespace BlueLobby
         private readonly List<Button> _compactNavButtons = new();
         private TextBlock? _titleBlock;
         private TextBlock? _subtitleBlock;
-        private TextBlock? _platformBlock;
+        private Border? _platformBlock;
         private TextBlock? _statusBarText;
         private TextBox? _logBox;
         private readonly List<TextBlock> _mutedBlocks = new();
@@ -266,7 +267,6 @@ namespace BlueLobby
                 Content = sections,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
             };
 
             var contentStack = new StackPanel();
