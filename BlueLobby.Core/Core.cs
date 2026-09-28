@@ -112,7 +112,7 @@ namespace BlueLobby.Core
             Add(exeDir ?? string.Empty, 1000);
             Add(root, 900);
 
-            foreach (string baseDir in new[] { exeDir, root }.Where(x => !string.IsNullOrWhiteSpace(x)))
+            foreach (string baseDir in new string?[] { exeDir, root }.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!))
             {
                 foreach (string child in EnumerateCandidateSubdirectories(baseDir!, 2, 80))
                 {
