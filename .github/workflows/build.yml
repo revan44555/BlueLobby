@@ -69,7 +69,9 @@ jobs:
         shell: pwsh
         run: |
           choco install innosetup --no-progress --yes
-          & "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe" installer\BlueLobby.iss
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found: $iscc" }
+          & $iscc installer\BlueLobby.iss
           if (-not (Test-Path BlueLobby-Setup.exe)) { throw "BlueLobby-Setup.exe was not created." }
       - name: Package portable Windows build
         shell: pwsh
