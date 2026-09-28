@@ -168,7 +168,7 @@ jobs:
 
   release:
     name: GitHub Release
-    if: github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.release_version != '') || (github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Release V4.3.0')
+    if: github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.release_version != '')
     needs: [build-windows, build-linux]
     permissions:
       contents: write
@@ -189,9 +189,9 @@ jobs:
             release/bluelobby-linux-x64/BlueLobby.AppImage.sha256
             release/bluelobby-linux-x64/BlueLobby-linux-x64.tar.gz
             release/bluelobby-linux-x64/BlueLobby-linux-x64.sha256
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || inputs.release_version || 'V4.3.0' }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || inputs.release_version }}
           target_commitish: ${{ github.sha }}
-          name: BlueLobby ${{ github.ref_type == 'tag' && github.ref_name || inputs.release_version || 'V4.3.0' }}
+          name: BlueLobby ${{ github.ref_type == 'tag' && github.ref_name || inputs.release_version }}
           generate_release_notes: true
           overwrite_files: true
           fail_on_unmatched_files: true
