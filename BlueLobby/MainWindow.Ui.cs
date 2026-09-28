@@ -357,9 +357,7 @@ namespace BlueLobby
             _lstGames = new ListBox
             {
                 MinHeight = 84,
-                MaxHeight = 190,
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                BorderThickness = new Avalonia.Thickness(0),
+                MaxHeight = 190,                BorderThickness = new Avalonia.Thickness(0),
             };
             _lstGames.SelectionChanged += DiscoveredGame_SelectionChanged;
             panel.Children.Add(Ui.Card(new StackPanel
