@@ -211,7 +211,7 @@ namespace BlueLobby.Core
 
         private static IEnumerable<DiscoveredGame> DiscoverLutris(string home, CancellationToken ct)
         {
-            string[] candidates =
+            var candidateList = new List<string>
             {
                 Path.Combine(home, ".config", "lutris", "games"),
                 Path.Combine(home, ".local", "share", "lutris", "games"),
@@ -219,7 +219,11 @@ namespace BlueLobby.Core
                 Path.Combine(home, ".var", "app", "net.lutris.Lutris", "data", "lutris", "games"),
             };
 
-            foreach (string dir in candidates.Distinct(StringComparer.Ordinal))
+            string xdgConfig = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(xdgConfig))
+                candidateList.Add(Path.Combine(xdgConfig, "lutris", "games"));
+
+            foreach (string dir in candidateList.Distinct(StringComparer.Ordinal))
             {
                 if (!Directory.Exists(dir)) continue;
                 IEnumerable<string> files;
