@@ -169,6 +169,7 @@ namespace BlueLobby
                     FontSize = 11.5,
                     Foreground = Ui.Brush(Ui.C.Muted),
                     Margin = new Avalonia.Thickness(0, 2, 0, 0),
+                    RenderTransform = _mascotTransform = new TranslateTransform(),
                 };
                 footerStack.Children.Add(_mascotBlock);
                 _mascotBlock.Tapped += (_, _) => _ = new ConfirmDialog("Mavi 🤖", new[] { Loc.T("mascot_tip") }, Loc.T("yes"), string.Empty).ShowDialog<bool>(this);
