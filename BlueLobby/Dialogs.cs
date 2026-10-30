@@ -1,41 +1,87 @@
 using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 
 namespace BlueLobby
 {
-    /// <summary>Küçük onay/uyarı diyaloğu (Avalonia MessageBox eşdeğeri).</summary>
+    /// <summary>Shared, theme-aware confirmation and information dialog.</summary>
     public class ConfirmDialog : Window
     {
         public ConfirmDialog(string title, IEnumerable<string> lines, string yesText, string noText)
         {
             Title = title;
-            Width = 540; Height = 340; MinWidth = 400; MinHeight = 220;
+            Width = 520;
+            Height = 310;
+            MinWidth = 390;
+            MinHeight = 210;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            Background = Ui.Brush(Ui.C.Window);
+            Foreground = Ui.Brush(Ui.C.Text);
+            CanResize = true;
 
-            var panel = new StackPanel { Margin = new Avalonia.Thickness(16), Spacing = 8 };
+            var content = new StackPanel { Spacing = 12 };
+            var heading = Ui.SectionTitle(title);
+            heading.FontSize = 17;
+            content.Children.Add(heading);
+            content.Children.Add(new Border
+            {
+                Height = 1,
+                Background = Ui.Brush(Ui.C.BorderSubtle),
+                Margin = new Thickness(0, 0, 0, 2),
+            });
+
+            var message = new StackPanel { Spacing = 8 };
             foreach (string line in lines)
             {
-                panel.Children.Add(new TextBlock { Text = line, TextWrapping = TextWrapping.Wrap });
+                message.Children.Add(new TextBlock
+                {
+                    Text = line,
+                    Foreground = Ui.Brush(Ui.C.Muted),
+                    FontFamily = new FontFamily("Inter"),
+                    FontSize = 12.5,
+                    TextWrapping = TextWrapping.Wrap,
+                });
             }
+            var messageSurface = Ui.Surface(message);
+            content.Children.Add(new ScrollViewer
+            {
+                Content = messageSurface,
+                MaxHeight = 180,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            });
 
-            var yes = new Button { Content = yesText, MinWidth = 90 };
+            var yes = Ui.Btn(yesText, Ui.BtnKind.Primary);
+            yes.MinWidth = 100;
             yes.Click += (_, _) => Close(true);
-            var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Avalonia.Thickness(0, 10, 0, 0) };
-            buttons.Children.Add(yes);
+            var buttons = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Spacing = 8,
+                Margin = new Thickness(0, 4, 0, 0),
+            };
             if (!string.IsNullOrEmpty(noText))
             {
-                var no = new Button { Content = noText, MinWidth = 90 };
+                var no = Ui.Btn(noText, Ui.BtnKind.Secondary);
+                no.MinWidth = 90;
                 no.Click += (_, _) => Close(false);
                 buttons.Children.Add(no);
             }
-            panel.Children.Add(buttons);
-            Content = panel;
+            buttons.Children.Add(yes);
+            content.Children.Add(buttons);
+
+            Content = new Border
+            {
+                Padding = new Thickness(20),
+                Child = content,
+            };
         }
     }
 
-    /// <summary>Metin girişi isteyen küçük diyalog (profil kodu yapıştırma için).</summary>
+    /// <summary>Text entry dialog used by profile import and other existing flows.</summary>
     public class InputDialog : Window
     {
         public string ResultText { get; private set; } = string.Empty;
@@ -44,24 +90,40 @@ namespace BlueLobby
         public InputDialog(string title, string watermark)
         {
             Title = title;
-            Width = 560; Height = 170; MinWidth = 440; MinHeight = 150;
+            Width = 540;
+            Height = 190;
+            MinWidth = 420;
+            MinHeight = 160;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            Background = Ui.Brush(Ui.C.Window);
+            Foreground = Ui.Brush(Ui.C.Text);
 
-            _box = new TextBox { Watermark = watermark };
-            var ok = new Button { Content = Loc.T("yes"), MinWidth = 90 };
+            _box = new TextBox { Watermark = watermark, MinHeight = Ui.ButtonMinHeight };
+            Ui.StyleInput(_box);
+            var ok = Ui.Btn(Loc.T("yes"), Ui.BtnKind.Primary);
+            ok.MinWidth = 90;
             ok.Click += (_, _) => { ResultText = _box.Text ?? string.Empty; Close(true); };
-            var cancel = new Button { Content = Loc.T("no"), MinWidth = 90 };
+            var cancel = Ui.Btn(Loc.T("no"), Ui.BtnKind.Secondary);
+            cancel.MinWidth = 90;
             cancel.Click += (_, _) => Close(false);
 
-            var panel = new StackPanel { Margin = new Avalonia.Thickness(16), Spacing = 10 };
+            var panel = new StackPanel { Spacing = 12 };
+            var heading = Ui.SectionTitle(title);
+            heading.FontSize = 16;
+            panel.Children.Add(heading);
             panel.Children.Add(_box);
             panel.Children.Add(new StackPanel
             {
                 Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
                 Spacing = 8,
-                Children = { ok, cancel }
+                Children = { cancel, ok },
             });
-            Content = panel;
+            Content = new Border
+            {
+                Padding = new Thickness(20),
+                Child = panel,
+            };
         }
     }
 }
