@@ -9,7 +9,7 @@ namespace BlueLobby
         {
             ["tr"] = new()
             {
-                ["title"] = "🎮 BLUELOBBY",
+                ["title"] = "BLUELOBBY",
                 ["subtitle"] = "Yerel ağ/VPN oturum hazırlık, yedekleme ve geri alma paneli",
                 ["warn"] = "Yalnızca sahip olduğunuz oyunlar ve yasal LAN kullanımı içindir.",
                 ["banner"] = "⚠️ VPN ağ adaptörü bulunamadı.",
@@ -25,7 +25,7 @@ namespace BlueLobby
                 ["dlc"] = "Ek içerik şablonu oluştur",
                 ["firewall"] = "Güvenlik Duvarı İzni",
                 ["broadcast"] = "VPN Lobi Sabitleme",
-                ["friends"] = "👥 Arkadaş Listesi",
+                ["friends"] = "Arkadaş Listesi",
                 ["fname"] = "İsim:",
                 ["fip"] = "IP:",
                 ["add"] = "Ekle",
@@ -50,10 +50,10 @@ namespace BlueLobby
                 ["lang_en"] = "English",
                 ["lang_de"] = "Deutsch",
                 ["mascot_tip"] = "Merhaba! Ben Mavi. Takıldığında bana sor. 🤖",
-                ["nav_game"] = "🎮  Oyun",
-                ["nav_friends"] = "👥  Arkadaşlar",
-                ["nav_settings"] = "⚙️  Ayarlar",
-                ["nav_log"] = "📋  Gelişmiş / Log",
+                ["nav_game"] = "Oyun",
+                ["nav_friends"] = "Arkadaşlar",
+                ["nav_settings"] = "Ayarlar",
+                ["nav_log"] = "İşlem kaydı",
                 ["find_emu"] = "🔍 Yerel Bileşenleri Ara ve Kopyala",
                 ["dl_radmin"] = "⬇ VPN İstemcisini İndir",
                 ["emu_ok"] = "🟢 Bileşen: hazır",
@@ -61,7 +61,7 @@ namespace BlueLobby
             },
             ["en"] = new()
             {
-                ["title"] = "🎮 BLUELOBBY",
+                ["title"] = "BLUELOBBY",
                 ["subtitle"] = "Local network/VPN session preparation, backup and restore panel",
                 ["warn"] = "For games you own and legal LAN use only.",
                 ["banner"] = "⚠️ VPN network adapter not found.",
@@ -77,7 +77,7 @@ namespace BlueLobby
                 ["dlc"] = "Create extra-content template",
                 ["firewall"] = "Firewall Permission",
                 ["broadcast"] = "VPN Lobby Pin",
-                ["friends"] = "👥 Friend List",
+                ["friends"] = "Friend List",
                 ["fname"] = "Name:",
                 ["fip"] = "IP:",
                 ["add"] = "Add",
@@ -102,10 +102,10 @@ namespace BlueLobby
                 ["lang_en"] = "English",
                 ["lang_de"] = "Deutsch",
                 ["mascot_tip"] = "Hi! I'm Mavi. Ask me if you get stuck. 🤖",
-                ["nav_game"] = "🎮  Game",
-                ["nav_friends"] = "👥  Friends",
-                ["nav_settings"] = "⚙️  Settings",
-                ["nav_log"] = "📋  Advanced / Log",
+                ["nav_game"] = "Game",
+                ["nav_friends"] = "Friends",
+                ["nav_settings"] = "Settings",
+                ["nav_log"] = "Activity log",
                 ["find_emu"] = "🔍 Search && Copy Local Components",
                 ["dl_radmin"] = "⬇ Download VPN Client",
                 ["emu_ok"] = "🟢 Component: ready",
@@ -113,7 +113,7 @@ namespace BlueLobby
             },
             ["de"] = new()
             {
-                ["title"] = "🎮 BLUELOBBY",
+                ["title"] = "BLUELOBBY",
                 ["subtitle"] = "Lokales Netzwerk/VPN-Sitzungsvorbereitungs-, Backup- und Wiederherstellungspanel",
                 ["warn"] = "Nur für Spiele, die Sie besitzen, und legale LAN-Nutzung.",
                 ["banner"] = "⚠️ VPN-Netzwerkadapter nicht gefunden.",
@@ -129,7 +129,7 @@ namespace BlueLobby
                 ["dlc"] = "Zusatzinhalt-Vorlage erstellen",
                 ["firewall"] = "Firewall-Erlaubnis",
                 ["broadcast"] = "VPN-Lobby-Anheftung",
-                ["friends"] = "👥 Freundesliste",
+                ["friends"] = "Freundesliste",
                 ["fname"] = "Name:",
                 ["fip"] = "IP:",
                 ["add"] = "Hinzufügen",
@@ -154,10 +154,10 @@ namespace BlueLobby
                 ["lang_en"] = "English",
                 ["lang_de"] = "Deutsch",
                 ["mascot_tip"] = "Hallo! Ich bin Mavi. Frag mich, wenn du nicht weiterkommst. 🤖",
-                ["nav_game"] = "🎮  Spiel",
-                ["nav_friends"] = "👥  Freunde",
-                ["nav_settings"] = "⚙️  Einstellungen",
-                ["nav_log"] = "📋  Erweitert / Log",
+                ["nav_game"] = "Spiel",
+                ["nav_friends"] = "Freunde",
+                ["nav_settings"] = "Einstellungen",
+                ["nav_log"] = "Aktivitätsprotokoll",
                 ["find_emu"] = "🔍 Lokale Komponenten suchen && kopieren",
                 ["dl_radmin"] = "⬇ VPN-Client laden",
                 ["emu_ok"] = "🟢 Komponente: bereit",
@@ -184,7 +184,7 @@ namespace BlueLobby
             return key;
         }
 
-        
+
         public static string Current { get; private set; } = "tr";
 
         static Loc()
@@ -217,9 +217,21 @@ namespace BlueLobby
             Add("tr", "friend_used", "Arkadaş IP olarak kullanıldı");
             Add("en", "friend_used", "Used as friend IP");
             Add("de", "friend_used", "Als Freundes-IP übernommen");
-            Add("tr", "nav_learn", "🎓 Mavi'nin Okulu");
-            Add("en", "nav_learn", "🎓 Mavi's School");
-            Add("de", "nav_learn", "🎓 Mavis Schule");
+            Add("tr", "friend_remove_q", "Arkadaş kaydı silinsin mi?");
+            Add("en", "friend_remove_q", "Remove this friend?");
+            Add("de", "friend_remove_q", "Diesen Freund entfernen?");
+            Add("tr", "friend_remove_detail", "Bu kayıt arkadaş listesinden kalıcı olarak kaldırılacak:");
+            Add("en", "friend_remove_detail", "This entry will be removed from your friends list:");
+            Add("de", "friend_remove_detail", "Dieser Eintrag wird aus deiner Freundesliste entfernt:");
+            Add("tr", "log_clear_q", "İşlem kaydı temizlensin mi?");
+            Add("en", "log_clear_q", "Clear the activity log?");
+            Add("de", "log_clear_q", "Aktivitätsprotokoll leeren?");
+            Add("tr", "log_clear_detail", "Geçerli oturumdaki ekranda tutulan log metni temizlenecek. Dışa aktarılan dosyalar etkilenmez.");
+            Add("en", "log_clear_detail", "The in-window log text for this session will be cleared. Exported log files are not affected.");
+            Add("de", "log_clear_detail", "Der Protokolltext in diesem Fenster wird geleert. Exportierte Protokolldateien bleiben unverändert.");
+            Add("tr", "nav_learn", "Mavi’nin Okulu");
+            Add("en", "nav_learn", "Mavi’s School");
+            Add("de", "nav_learn", "Mavis Schule");
             Add("tr", "brand_eyebrow", "BLUELOBBY MASAÜSTÜ");
             Add("en", "brand_eyebrow", "BLUELOBBY DESKTOP");
             Add("de", "brand_eyebrow", "BLUELOBBY DESKTOP");

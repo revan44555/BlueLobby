@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.Styling;
 using BlueLobby.Core;
 
 namespace BlueLobby
@@ -90,9 +91,10 @@ namespace BlueLobby
             _themedBorders.Clear();
 
             _titleBlock = Ui.Title(Loc.T("title"));
-            _titleBlock.FontSize = 19;
+            _titleBlock.FontSize = 17;
+            _titleBlock.Foreground = Ui.Brush(Ui.C.Text);
             _subtitleBlock = Ui.Muted(Loc.T("subtitle"));
-            _subtitleBlock.FontSize = 11.5;
+            _subtitleBlock.FontSize = 10.5;
             _subtitleBlock.Margin = new Avalonia.Thickness(0, 3, 0, 16);
             _mutedBlocks.Add(_subtitleBlock);
 
@@ -116,17 +118,17 @@ namespace BlueLobby
 
             _sidebarVpnChip = Ui.ChipText("VPN: --");
 
-            var sidebarPanel = new StackPanel { Margin = new Avalonia.Thickness(18, 20, 18, 18), Spacing = 4 };
+            var sidebarPanel = new StackPanel { Margin = new Avalonia.Thickness(18, 22, 16, 16), Spacing = 5 };
             var brandRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
             var brandMark = new Border
             {
-                Width = 34, Height = 34,
-                CornerRadius = new CornerRadius(10),
+                Width = 36, Height = 36,
+                CornerRadius = new CornerRadius(9),
                 Background = Ui.Brush(Ui.C.Accent),
                 Child = new TextBlock
                 {
                     Text = "B",
-                    Foreground = Ui.Brush(Ui.C.Window),
+                    Foreground = Ui.Brush(Ui.C.AccentText),
                     FontSize = 18,
                     FontWeight = FontWeight.Bold,
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -134,7 +136,7 @@ namespace BlueLobby
                 }
             };
             brandRow.Children.Add(brandMark); Grid.SetColumn(brandMark, 0);
-            var brandText = new StackPanel { Spacing = 0, Margin = new Avalonia.Thickness(10, 0, 0, 0) };
+            var brandText = new StackPanel { Spacing = 1, Margin = new Avalonia.Thickness(10, 0, 0, 0) };
             brandText.Children.Add(_titleBlock);
             brandText.Children.Add(_subtitleBlock);
             brandRow.Children.Add(brandText); Grid.SetColumn(brandText, 1);
@@ -155,9 +157,9 @@ namespace BlueLobby
                 Background = Ui.Brush(Ui.C.Surface),
                 BorderBrush = Ui.Brush(Ui.C.Border),
                 BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = Ui.CardRadius,
+                CornerRadius = new CornerRadius(9),
                 Padding = new Avalonia.Thickness(12),
-                Margin = new Avalonia.Thickness(0, 18, 0, 0),
+                Margin = new Avalonia.Thickness(0, 20, 0, 0),
             };
             var footerStack = new StackPanel { Spacing = 9 };
             footerStack.Children.Add(sideStatus);
@@ -234,6 +236,7 @@ namespace BlueLobby
             {
                 var btn = Ui.Btn(Loc.T(key), Ui.BtnKind.Ghost);
                 btn.Tag = section;
+                ConfigureNavigationButton(btn);
                 btn.Click += Nav_Click;
                 btn.Margin = new Avalonia.Thickness(0, 0, 6, 6);
                 _compactNavButtons.Add(btn);
@@ -251,19 +254,19 @@ namespace BlueLobby
             _pageSubtitle.Margin = new Avalonia.Thickness(0, 4, 0, 0);
             _mutedBlocks.Add(_pageSubtitle);
 
-            var pageHeader = new StackPanel { Spacing = 0, Margin = new Avalonia.Thickness(0, 0, 0, 18) };
+            var pageHeader = new StackPanel { Spacing = 0 };
             pageHeader.Children.Add(_pageEyebrow);
             pageHeader.Children.Add(_pageTitle);
             pageHeader.Children.Add(_pageSubtitle);
             _topHeader = new Border
             {
-                Background = Ui.Brush(Ui.C.Surface),
-                BorderBrush = Ui.Brush(Ui.C.Border),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = Ui.CardRadius,
-                Padding = new Avalonia.Thickness(18, 14),
+                Background = Brushes.Transparent,
+                BorderBrush = Ui.Brush(Ui.C.BorderSubtle),
+                BorderThickness = new Avalonia.Thickness(0, 0, 0, 1),
+                CornerRadius = new CornerRadius(0),
+                Padding = new Avalonia.Thickness(0, 0, 0, 16),
                 Child = pageHeader,
-                Margin = new Avalonia.Thickness(0, 0, 0, 14),
+                Margin = new Avalonia.Thickness(0, 0, 0, 18),
             };
             _themedBorders.Add(_topHeader);
 
@@ -289,21 +292,28 @@ namespace BlueLobby
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             };
 
-            var contentStack = new StackPanel();
-            contentStack.Children.Add(_compactNav);
-            contentStack.Children.Add(_topHeader);
-            contentStack.Children.Add(sectionScroll);
-            contentStack.Children.Add(_statusBarBorder);
+            var contentGrid = new Grid
+            {
+                RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
+            };
+            contentGrid.Children.Add(_compactNav);
+            Grid.SetRow(_compactNav, 0);
+            contentGrid.Children.Add(_topHeader);
+            Grid.SetRow(_topHeader, 1);
+            contentGrid.Children.Add(sectionScroll);
+            Grid.SetRow(sectionScroll, 2);
+            contentGrid.Children.Add(_statusBarBorder);
+            Grid.SetRow(_statusBarBorder, 3);
 
             var content = new Border
             {
                 Background = Ui.Brush(Ui.C.Window),
                 Padding = Ui.PagePadding,
-                Child = contentStack,
+                Child = contentGrid,
             };
             _themedBorders.Add(content);
 
-            _mainColumns = new ColumnDefinitions("232,*");
+            _mainColumns = new ColumnDefinitions("244,*");
             var layout = new Grid { ColumnDefinitions = _mainColumns };
             layout.Children.Add(_sidebarBorder); Grid.SetColumn(_sidebarBorder, 0);
             layout.Children.Add(content); Grid.SetColumn(content, 1);
@@ -319,6 +329,23 @@ namespace BlueLobby
             _sidebarTargetText.Text = string.IsNullOrWhiteSpace(path)
                 ? Loc.T("game_target_empty")
                 : path;
+        }
+
+        private void ConfigureNavigationButton(Button button)
+        {
+            button.PointerEntered += (_, _) =>
+            {
+                button.Background = Ui.Brush(Ui.C.Hover);
+                button.Foreground = Ui.Brush(Ui.C.Text);
+                button.BorderBrush = Ui.Brush(Ui.C.Border);
+            };
+            button.PointerExited += (_, _) =>
+            {
+                bool selected = Equals(button.Tag as string, _section);
+                button.Background = selected ? Ui.Brush(Ui.C.SurfaceStrong) : Brushes.Transparent;
+                button.Foreground = selected ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
+                button.BorderBrush = selected ? Ui.Brush(Ui.C.Accent) : Brushes.Transparent;
+            };
         }
 
         private TextBlock NavGroupLabel(string text)
@@ -338,10 +365,12 @@ namespace BlueLobby
         {
             var btn = Ui.Btn(Loc.T(locKey), Ui.BtnKind.Ghost);
             btn.Tag = section;
+            ConfigureNavigationButton(btn);
             btn.HorizontalAlignment = HorizontalAlignment.Stretch;
             btn.HorizontalContentAlignment = HorizontalAlignment.Left;
             btn.Margin = new Avalonia.Thickness(0, 1, 0, 1);
-            btn.Padding = new Avalonia.Thickness(11, 10);
+            btn.Padding = new Avalonia.Thickness(12, 9);
+            btn.MinHeight = 38;
             btn.Click += Nav_Click;
             _navButtons.Add(btn);
             _allButtons.Add(btn);
@@ -363,7 +392,7 @@ namespace BlueLobby
             });
             purposeText.Children.Add(Ui.Muted(Loc.T("setup_subtitle")));
             purpose.Children.Add(purposeText);
-            var safeBadge = Ui.Badge("SAFE • BACKUP", Ui.Ok, Ui.Brush(Ui.C.SurfaceStrong));
+            var safeBadge = Ui.Badge("BACKUP PROTECTED", Ui.Ok, Ui.Brush(Ui.C.SurfaceStrong));
             safeBadge.VerticalAlignment = VerticalAlignment.Center;
             purpose.Children.Add(safeBadge);
             Grid.SetColumn(safeBadge, 1);
@@ -386,6 +415,7 @@ namespace BlueLobby
                 Text = _gameDir,
                 MinHeight = Ui.ButtonMinHeight,
             };
+            Ui.StyleInput(_txtGameDir);
             var btnBrowse = Ui.Btn("📁  " + Loc.T("gamefolder"), Ui.BtnKind.Secondary);
             btnBrowse.Click += BtnBrowse_Click;
 
@@ -401,6 +431,7 @@ namespace BlueLobby
                 MinHeight = Ui.ButtonMinHeight,
                 Margin = new Avalonia.Thickness(0, 8, 0, 0),
             };
+            Ui.StyleInput(_cmbExes);
             _cmbExes.SelectionChanged += CmbExes_SelectionChanged;
 
             var folderCard = new StackPanel { Spacing = 0 };
@@ -417,6 +448,7 @@ namespace BlueLobby
                 MaxHeight = 190,
                 BorderThickness = new Avalonia.Thickness(0),
             };
+            Ui.StyleInput(_lstGames);
             _lstGames.SelectionChanged += DiscoveredGame_SelectionChanged;
 
             var libraryHeader = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
@@ -448,78 +480,6 @@ namespace BlueLobby
             statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_vpn"), _chipVpn, Loc.T("status_vpn_detail")));
             panel.Children.Add(statusWrap);
 
-            _txtPlayerName = new TextBox { Text = _settings.PlayerName, MinHeight = Ui.ButtonMinHeight };
-            _txtAppId = new TextBox { Text = _settings.AppId, MinHeight = Ui.ButtonMinHeight };
-            _txtAppId.TextChanged += (_, _) => _ = UpdateSystemStatusAsync();
-            _txtFriendIp = new TextBox
-            {
-                Text = _settings.FriendIp,
-                Watermark = Loc.T("tip_friendip"),
-                MinHeight = Ui.ButtonMinHeight,
-            };
-            _cmbLanguage = new ComboBox { SelectedIndex = 0, MinHeight = Ui.ButtonMinHeight };
-            foreach (string lang in new[] { "english", "turkish", "german" })
-                _cmbLanguage.Items.Add(new ComboBoxItem { Content = lang });
-
-            var sessionWrap = new WrapPanel { Orientation = Orientation.Horizontal };
-            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("player"), _txtPlayerName));
-            sessionWrap.Children.Add(Ui.FieldCard("AppID", _txtAppId));
-            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("friendip"), _txtFriendIp));
-            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("gamelang"), _cmbLanguage));
-
-            var sessionCard = new StackPanel { Spacing = 4 };
-            sessionCard.Children.Add(Ui.SectionTitle(Loc.T("section_session")));
-            sessionCard.Children.Add(Ui.Muted(Loc.T("session_subtitle")));
-            sessionCard.Children.Add(new Border { Height = 6, Background = Brushes.Transparent });
-            sessionCard.Children.Add(sessionWrap);
-            panel.Children.Add(Ui.Card(sessionCard));
-
-            _chkUnlockDlc = new CheckBox { Content = Loc.T("dlc") };
-            _chkCustomBroadcast = new CheckBox { Content = Loc.T("broadcast"), IsChecked = true };
-            _chkFirewall = new CheckBox
-            {
-                Content = Loc.T("firewall"),
-                IsChecked = true,
-                IsVisible = App.Services.SupportsFirewall,
-            };
-
-            var advancedBody = new StackPanel { Spacing = 10 };
-            advancedBody.Children.Add(Ui.Muted(Loc.T("advanced_subtitle")));
-            advancedBody.Children.Add(_chkUnlockDlc);
-            advancedBody.Children.Add(_chkCustomBroadcast);
-            advancedBody.Children.Add(_chkFirewall);
-            var advanced = new Expander
-            {
-                Header = Loc.T("advanced_options"),
-                IsExpanded = false,
-                Content = Ui.Card(advancedBody, 0),
-                Margin = new Avalonia.Thickness(0, 0, 0, 12),
-            };
-            panel.Children.Add(advanced);
-
-            var btnFindEmu = Ui.Btn(Loc.T("find_emu"), Ui.BtnKind.Secondary);
-            btnFindEmu.Click += BtnFindEmu_Click;
-            var btnAuto = Ui.Btn(Loc.T("autoscan"), Ui.BtnKind.Secondary);
-            btnAuto.Click += BtnAutoSetup_Click;
-            var btnPing = Ui.Btn(Loc.T("ping_btn"), Ui.BtnKind.Secondary);
-            btnPing.Click += BtnPingTest_Click;
-            var btnShare = Ui.Btn("🔗  " + Loc.T("share_profile"), Ui.BtnKind.Secondary);
-            btnShare.Click += BtnShareProfile_Click;
-            var btnImport = Ui.Btn("📥  " + Loc.T("import_profile"), Ui.BtnKind.Secondary);
-            btnImport.Click += BtnImportProfile_Click;
-
-            var toolBody = new StackPanel { Spacing = 6 };
-            toolBody.Children.Add(Ui.Muted(Loc.T("tools_subtitle")));
-            toolBody.Children.Add(Ui.BtnRow(btnFindEmu, btnAuto, btnPing, btnShare, btnImport));
-            var toolExpander = new Expander
-            {
-                Header = "🧰  " + Loc.T("tools"),
-                IsExpanded = false,
-                Content = Ui.Card(toolBody, 0),
-                Margin = new Avalonia.Thickness(0, 0, 0, 12),
-            };
-            panel.Children.Add(toolExpander);
-
             var btnApply = Ui.Btn("⚡  " + Loc.T("apply"), Ui.BtnKind.Primary);
             btnApply.MinWidth = 170;
             btnApply.Click += BtnApply_Click;
@@ -548,11 +508,92 @@ namespace BlueLobby
                 Background = Ui.Brush(Ui.C.SurfaceStrong),
                 BorderBrush = Ui.Brush(Ui.C.Border),
                 BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = Ui.CardRadius,
-                Padding = new Avalonia.Thickness(16),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Avalonia.Thickness(17, 15),
                 Margin = new Avalonia.Thickness(0, 2, 0, 12),
                 Child = actionInner,
             });
+
+            _txtPlayerName = new TextBox { Text = _settings.PlayerName, MinHeight = Ui.ButtonMinHeight };
+            _txtAppId = new TextBox { Text = _settings.AppId, MinHeight = Ui.ButtonMinHeight };
+            _txtAppId.TextChanged += (_, _) => _ = UpdateSystemStatusAsync();
+            _txtFriendIp = new TextBox
+            {
+                Text = _settings.FriendIp,
+                Watermark = Loc.T("tip_friendip"),
+                MinHeight = Ui.ButtonMinHeight,
+            };
+            _cmbLanguage = new ComboBox { SelectedIndex = 0, MinHeight = Ui.ButtonMinHeight };
+            Ui.StyleInput(_cmbLanguage);
+            foreach (string lang in new[] { "english", "turkish", "german" })
+                _cmbLanguage.Items.Add(new ComboBoxItem { Content = lang });
+
+            var sessionWrap = new WrapPanel { Orientation = Orientation.Horizontal };
+            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("player"), _txtPlayerName));
+            sessionWrap.Children.Add(Ui.FieldCard("AppID", _txtAppId));
+            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("friendip"), _txtFriendIp));
+            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("gamelang"), _cmbLanguage));
+
+            var sessionCard = new StackPanel { Spacing = 4 };
+            sessionCard.Children.Add(Ui.SectionTitle(Loc.T("section_session")));
+            sessionCard.Children.Add(Ui.Muted(Loc.T("session_subtitle")));
+            sessionCard.Children.Add(new Border { Height = 6, Background = Brushes.Transparent });
+            sessionCard.Children.Add(sessionWrap);
+            panel.Children.Add(Ui.Card(sessionCard));
+
+            _chkUnlockDlc = new CheckBox { Content = Loc.T("dlc") };
+            _chkCustomBroadcast = new CheckBox { Content = Loc.T("broadcast"), IsChecked = true };
+            _chkFirewall = new CheckBox
+            {
+                Content = Loc.T("firewall"),
+                IsChecked = true,
+                IsVisible = App.Services.SupportsFirewall,
+            };
+            Ui.StyleInput(_chkUnlockDlc);
+            Ui.StyleInput(_chkCustomBroadcast);
+            Ui.StyleInput(_chkFirewall);
+
+            var advancedBody = new StackPanel { Spacing = 10 };
+            advancedBody.Children.Add(Ui.Muted(Loc.T("advanced_subtitle")));
+            advancedBody.Children.Add(_chkUnlockDlc);
+            advancedBody.Children.Add(_chkCustomBroadcast);
+            advancedBody.Children.Add(_chkFirewall);
+            var advanced = new Expander
+            {
+                Header = Loc.T("advanced_options"),
+                IsExpanded = false,
+                Content = Ui.Card(advancedBody, 0),
+                Margin = new Avalonia.Thickness(0, 0, 0, 12),
+                Foreground = Ui.Brush(Ui.C.Text),
+                Background = Ui.Brush(Ui.C.Surface),
+            };
+            panel.Children.Add(advanced);
+
+            var btnFindEmu = Ui.Btn(Loc.T("find_emu"), Ui.BtnKind.Secondary);
+            btnFindEmu.Click += BtnFindEmu_Click;
+            var btnAuto = Ui.Btn(Loc.T("autoscan"), Ui.BtnKind.Secondary);
+            btnAuto.Click += BtnAutoSetup_Click;
+            var btnPing = Ui.Btn(Loc.T("ping_btn"), Ui.BtnKind.Secondary);
+            btnPing.Click += BtnPingTest_Click;
+            var btnShare = Ui.Btn("🔗  " + Loc.T("share_profile"), Ui.BtnKind.Secondary);
+            btnShare.Click += BtnShareProfile_Click;
+            var btnImport = Ui.Btn("📥  " + Loc.T("import_profile"), Ui.BtnKind.Secondary);
+            btnImport.Click += BtnImportProfile_Click;
+
+            var toolBody = new StackPanel { Spacing = 6 };
+            toolBody.Children.Add(Ui.Muted(Loc.T("tools_subtitle")));
+            toolBody.Children.Add(Ui.BtnRow(btnFindEmu, btnAuto, btnPing, btnShare, btnImport));
+            var toolExpander = new Expander
+            {
+                Header = Loc.T("tools"),
+                IsExpanded = false,
+                Content = Ui.Card(toolBody, 0),
+                Margin = new Avalonia.Thickness(0, 0, 0, 12),
+                Foreground = Ui.Brush(Ui.C.Text),
+                Background = Ui.Brush(Ui.C.Surface),
+            };
+            panel.Children.Add(toolExpander);
+
 
             return panel;
         }
@@ -575,6 +616,7 @@ namespace BlueLobby
                 MaxHeight = 420,
                 BorderThickness = new Avalonia.Thickness(0),
             };
+            Ui.StyleInput(_lstFriends);
             _lstFriends.DoubleTapped += LstFriends_DoubleTapped;
 
             var btnUse = Ui.Btn(Loc.T("use"), Ui.BtnKind.Primary);
@@ -623,6 +665,7 @@ namespace BlueLobby
         private Control BuildSettingsSection()
         {
             var cmbTheme = new ComboBox { MinHeight = Ui.ButtonMinHeight };
+            Ui.StyleInput(cmbTheme);
             foreach ((string tag, string key) in new[] { ("gece", "theme_gece"), ("gunduz", "theme_gunduz"), ("pembe", "theme_pembe") })
             {
                 var item = new ComboBoxItem { Content = Loc.T(key), Tag = tag };
@@ -632,6 +675,7 @@ namespace BlueLobby
             cmbTheme.SelectionChanged += CmbTheme_SelectionChanged;
 
             var cmbLang = new ComboBox { MinHeight = Ui.ButtonMinHeight };
+            Ui.StyleInput(cmbLang);
             foreach ((string tag, string key) in new[] { ("tr", "lang_tr"), ("en", "lang_en"), ("de", "lang_de") })
             {
                 var item = new ComboBoxItem { Content = Loc.T(key), Tag = tag };
@@ -691,12 +735,26 @@ namespace BlueLobby
                 BorderThickness = new Avalonia.Thickness(0),
                 Padding = new Avalonia.Thickness(4),
             };
+            Ui.StyleInput(_logBox);
+            _logBox.Background = Ui.Brush(Ui.C.Input);
+            _logBox.Foreground = Ui.Brush(Ui.C.Log);
+            _logBox.FontFamily = new FontFamily("monospace");
             ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
 
             var btnCopy = Ui.Btn(Loc.T("copy")); btnCopy.Click += async (_, _) => await CopyTextAsync(_logBox.Text);
             var btnExport = Ui.Btn(Loc.T("export")); btnExport.Click += BtnExportLog_Click;
             var btnClear = Ui.Btn(Loc.T("clear"), Ui.BtnKind.Danger);
-            btnClear.Click += (_, _) => { _logBuffer = string.Empty; _logBox.Text = string.Empty; };
+            btnClear.Click += async (_, _) =>
+            {
+                var confirm = new ConfirmDialog(
+                    Loc.T("log_clear_q"),
+                    new[] { Loc.T("log_clear_detail") },
+                    Loc.T("yes"),
+                    Loc.T("no"));
+                if (!await confirm.ShowDialog<bool>(this)) return;
+                _logBuffer = string.Empty;
+                _logBox.Text = string.Empty;
+            };
 
             return Ui.Card(new StackPanel
             {
@@ -939,7 +997,7 @@ namespace BlueLobby
         {
             if (_mainColumns == null || _sidebarBorder == null || _compactNav == null) return;
             bool compact = Bounds.Width > 0 && Bounds.Width < 920;
-            _mainColumns[0].Width = compact ? new GridLength(0) : new GridLength(232);
+            _mainColumns[0].Width = compact ? new GridLength(0) : new GridLength(244);
             _sidebarBorder.IsVisible = !compact;
             _compactNav.IsVisible = compact;
         }
@@ -949,8 +1007,9 @@ namespace BlueLobby
             foreach (Button btn in _compactNavButtons)
             {
                 bool selected = Equals(btn.Tag as string, section);
-                btn.Background = selected ? Ui.Brush(Ui.C.Card) : Ui.Brush("transparent");
-                btn.Foreground = selected ? Ui.Brush(Ui.C.Title) : Ui.Brush(Ui.C.Muted);
+                btn.Background = selected ? Ui.Brush(Ui.C.SurfaceStrong) : Brushes.Transparent;
+                btn.Foreground = selected ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
+                btn.BorderBrush = selected ? Ui.Brush(Ui.C.Accent) : Brushes.Transparent;
             }
         }
 
@@ -982,7 +1041,7 @@ namespace BlueLobby
                 bool selected = Equals(btn.Tag as string, section);
                 btn.Background = selected ? Ui.Brush(Ui.C.SurfaceStrong) : Brushes.Transparent;
                 btn.Foreground = selected ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
-                btn.BorderBrush = selected ? Ui.Brush(Ui.C.Border) : Brushes.Transparent;
+                btn.BorderBrush = selected ? Ui.Brush(Ui.C.Accent) : Brushes.Transparent;
             }
             UpdateCompactNavSelection(section);
         }
@@ -990,6 +1049,12 @@ namespace BlueLobby
         private void ApplyTheme()
         {
             ThemeManager.Colors c = Ui.C;
+            if (Application.Current != null)
+            {
+                Application.Current.RequestedThemeVariant = ThemeManager.Current == "gunduz"
+                    ? ThemeVariant.Light
+                    : ThemeVariant.Dark;
+            }
             Background = Ui.Brush(c.Window);
             if (_sidebarBorder != null)
             {
@@ -998,8 +1063,8 @@ namespace BlueLobby
             }
             if (_topHeader != null)
             {
-                _topHeader.Background = Ui.Brush(c.Surface);
-                _topHeader.BorderBrush = Ui.Brush(c.Border);
+                _topHeader.Background = Brushes.Transparent;
+                _topHeader.BorderBrush = Ui.Brush(c.BorderSubtle);
             }
             if (_statusBarBorder != null)
             {
@@ -1010,9 +1075,10 @@ namespace BlueLobby
             if (_pageTitle != null) _pageTitle.Foreground = Ui.Brush(c.Text);
             if (_pageSubtitle != null) _pageSubtitle.Foreground = Ui.Brush(c.Muted);
             if (_pageEyebrow != null) _pageEyebrow.Foreground = Ui.Brush(c.Accent);
+            if (_sidebarTargetText != null) _sidebarTargetText.Foreground = Ui.Brush(c.Text);
             if (_logBox != null)
             {
-                _logBox.Background = Ui.Brush(c.Window);
+                _logBox.Background = Ui.Brush(c.Input);
                 _logBox.Foreground = Ui.Brush(c.Log);
             }
             foreach (TextBlock block in _mutedBlocks) block.Foreground = Ui.Brush(c.Muted);
@@ -1032,6 +1098,7 @@ namespace BlueLobby
         private void RebuildUi()
         {
             SaveUiToSettings();
+            ThemeManager.Get(_settings.Theme);
             Content = BuildUi();
             ApplyTheme();
             RefreshFriendList();

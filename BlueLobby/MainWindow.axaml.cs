@@ -680,9 +680,16 @@ namespace BlueLobby
             Log($"👥 Arkadaş eklendi: {name}");
         }
 
-        private void BtnRemoveFriend_Click(object? sender, RoutedEventArgs e)
+        private async void BtnRemoveFriend_Click(object? sender, RoutedEventArgs e)
         {
             if (_lstFriends?.SelectedItem is not FriendEntry selected) return;
+
+            var confirm = new ConfirmDialog(
+                Loc.T("friend_remove_q"),
+                new[] { Loc.T("friend_remove_detail"), selected.Name },
+                Loc.T("yes"),
+                Loc.T("no"));
+            if (!await confirm.ShowDialog<bool>(this)) return;
 
             _settings.Friends.RemoveAll(f => ReferenceEquals(f, selected) || string.Equals(f.Name, selected.Name, StringComparison.OrdinalIgnoreCase));
             App.Store.SaveSettings(_settings);
