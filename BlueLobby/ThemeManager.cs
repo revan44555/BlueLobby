@@ -3,22 +3,31 @@ using Avalonia.Media;
 
 namespace BlueLobby
 {
-    /// <summary>Üç tema (gece/gündüz/pembe) — renk verisi Legacy WPF ThemeManager'dan taşındı.</summary>
+    /// <summary>Centralized semantic palettes for the application shell and controls.</summary>
     public static class ThemeManager
     {
         public sealed class Colors
         {
-            public string Window = "#181825";
-            public string Sidebar = "#11111b";
-            public string Card = "#1e1e2e";
-            public string Text = "#cdd6f4";
-            public string Muted = "#a6adc8";
-            public string Title = "#f5e0dc";
-            public string Log = "#a6e3a1";
-            public string Accent = "#7C3AED";
-            public string Surface = "#181827";
-            public string SurfaceStrong = "#202034";
-            public string Border = "#31314A";
+            public string Window = "#0D1015";
+            public string Sidebar = "#10151C";
+            public string Card = "#151B23";
+            public string Text = "#EDF2F8";
+            public string Muted = "#9AA6B5";
+            public string Title = "#EDF2F8";
+            public string Log = "#B7D8C0";
+            public string Accent = "#6F9FF6";
+            public string AccentHover = "#82ADFA";
+            public string AccentText = "#0B1422";
+            public string Surface = "#111821";
+            public string SurfaceStrong = "#1B2633";
+            public string Hover = "#202D3B";
+            public string Input = "#101720";
+            public string Border = "#293442";
+            public string BorderSubtle = "#202A36";
+            public string Success = "#58B88A";
+            public string Warning = "#D9A653";
+            public string Error = "#D97777";
+            public string Info = "#6F9FF6";
         }
 
         private static readonly Dictionary<string, Colors> Themes = new()
@@ -26,15 +35,21 @@ namespace BlueLobby
             ["gece"] = new Colors(),
             ["gunduz"] = new Colors
             {
-                Window = "#F4F5F9", Sidebar = "#EAECF2", Card = "#FFFFFF",
-                Text = "#1F2430", Muted = "#667085", Title = "#4F46E5", Log = "#166534", Accent = "#4F46E5",
-                Surface = "#F8F9FC", SurfaceStrong = "#EEF0F6", Border = "#D9DDE8",
+                Window = "#F4F6F9", Sidebar = "#EBEFF4", Card = "#FFFFFF",
+                Text = "#1D2733", Muted = "#637184", Title = "#1D2733", Log = "#276247",
+                Accent = "#356FC5", AccentHover = "#285FAE", AccentText = "#FFFFFF",
+                Surface = "#F8FAFC", SurfaceStrong = "#E8EEF5", Hover = "#E5ECF5",
+                Input = "#FFFFFF", Border = "#D6DEE8", BorderSubtle = "#E4E9F0",
+                Success = "#23845A", Warning = "#A86B16", Error = "#B84545", Info = "#356FC5",
             },
             ["pembe"] = new Colors
             {
-                Window = "#24131D", Sidebar = "#190D14", Card = "#34202B",
-                Text = "#FDE7F2", Muted = "#D8A9BD", Title = "#FFB8D4", Log = "#A6E3A1", Accent = "#F472B6",
-                Surface = "#2B1924", SurfaceStrong = "#402330", Border = "#5A3044",
+                Window = "#171219", Sidebar = "#1D151D", Card = "#241B25",
+                Text = "#F1EAF2", Muted = "#B7A8B9", Title = "#F1EAF2", Log = "#B7D8C0",
+                Accent = "#C58AB2", AccentHover = "#D39CC0", AccentText = "#211420",
+                Surface = "#1D1720", SurfaceStrong = "#302432", Hover = "#382A3A",
+                Input = "#1A141C", Border = "#473747", BorderSubtle = "#362A38",
+                Success = "#69B88E", Warning = "#D9A653", Error = "#D97788", Info = "#B08CCB",
             },
         };
 
@@ -43,12 +58,13 @@ namespace BlueLobby
 
         public static Colors Get(string theme)
         {
-            if (!Themes.TryGetValue(theme, out Colors? t))
+            if (!Themes.TryGetValue(theme, out Colors? palette))
             {
-                t = Themes["gece"];
+                palette = Themes["gece"];
             }
+
             Current = Themes.ContainsKey(theme) ? theme : "gece";
-            return t;
+            return palette;
         }
 
         public static IBrush Brush(string hex) => new SolidColorBrush(Color.Parse(hex));
