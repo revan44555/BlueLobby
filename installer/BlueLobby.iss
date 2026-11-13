@@ -1,7 +1,7 @@
 ; BlueLobby Windows per-user installer
 #define AppName "BlueLobby"
 #define AppVersion "4.3.0"
-#define AppPublisher "Revan Qedirov"
+#define AppPublisher "Revan🇦🇿🇹🇷"
 #define AppExeName "BlueLobby.exe"
 
 [Setup]
