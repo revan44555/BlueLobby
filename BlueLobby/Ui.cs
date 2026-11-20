@@ -75,9 +75,8 @@ namespace BlueLobby
                 Stroke = color ?? Brush(C.Text),
                 StrokeThickness = 1.7,
                 Fill = null,
-                StrokeLineJoin = PenLineJoin.Round,
-                StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round,
+                StrokeJoin = PenLineJoin.Round,
+                StrokeCap = PenLineCap.Round,
                 Width = size,
                 Height = size,
                 Stretch = Stretch.Uniform,
@@ -99,12 +98,12 @@ namespace BlueLobby
 
             Polygon Ear(double x1, double apex, double x2) => new()
             {
-                Points = new PointCollection(new List<Point>
+                Points = new List<Point>
                 {
                     new(x1, 0.30 * size),
                     new(apex, 0.06 * size),
                     new(x2, 0.30 * size),
-                }),
+                },
                 Fill = brush,
             };
             canvas.Children.Add(Ear(0.22 * size, 0.32 * size, 0.42 * size));
@@ -156,12 +155,12 @@ namespace BlueLobby
 
             var beak = new Polygon
             {
-                Points = new PointCollection(new List<Point>
+                Points = new List<Point>
                 {
                     new(0.468 * size, 0.55 * size),
                     new(0.532 * size, 0.55 * size),
                     new(0.50 * size, 0.645 * size),
-                }),
+                },
                 Fill = Brush("#F97316"),
             };
             canvas.Children.Add(beak);
