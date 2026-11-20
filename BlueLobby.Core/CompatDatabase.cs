@@ -78,7 +78,7 @@ namespace BlueLobby.Core
                 return new CompatResult
                 {
                     Status = CompatStatus.Unknown,
-                    Display = "❓ Bu oyun listede yok — deneyebilirsiniz, sonucu paylaşın.",
+                    Display = "Bu oyun listede yok — deneyebilirsiniz, sonucu paylaşın.",
                 };
             }
 
@@ -87,10 +87,10 @@ namespace BlueLobby.Core
                 Status = e.Status,
                 Display = e.Status switch
                 {
-                    CompatStatus.Works => "✅ LAN destekliyor",
-                    CompatStatus.NeedsConfig => "⚠️ Ek adım gerekiyor",
-                    CompatStatus.Unsupported => "✗ Bu yöntemle çalışmaz",
-                    _ => "❓ Bilinmiyor",
+                    CompatStatus.Works => "LAN destekliyor",
+                    CompatStatus.NeedsConfig => "Ek adım gerekiyor",
+                    CompatStatus.Unsupported => "Bu yöntemle çalışmaz",
+                    _ => "Bilinmiyor",
                 },
                 Note = e.Note,
             };

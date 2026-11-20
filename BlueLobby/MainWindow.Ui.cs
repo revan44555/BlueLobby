@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using Avalonia;
@@ -5,14 +6,14 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Threading;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using BlueLobby.Core;
 
 namespace BlueLobby
 {
     // Arayüz kurulumu — iş mantığı MainWindow.axaml.cs'dedir.
-    // Görsel düzen revizyonları bu dosyada (ve Ui.cs'de) yapılmalı.
+    // v6 "Meridian": sakin hiyerarşi, tek vurgu rengi, vektör ikonlar, az kart.
     public partial class MainWindow
     {
         // ---- Tema uygulanan referanslar ----
@@ -75,10 +76,12 @@ namespace BlueLobby
         private int _wizardStep = 1;
         private bool _wizardHasFolder;
         private TextBlock? _lblWizardTitle;
+        private TextBlock? _lblWizardSub;
         private StackPanel? _wizardBody;
         private Button? _btnWizBack;
         private Button? _btnWizNext;
         private Button? _btnWizFinish;
+        private readonly List<(Border Dot, TextBlock Label)> _wizardStepper = new();
 
         // ===================== UI kurulumu =====================
 
@@ -89,88 +92,80 @@ namespace BlueLobby
             _compactNavButtons.Clear();
             _allButtons.Clear();
             _themedBorders.Clear();
+            _wizardStepper.Clear();
 
             _titleBlock = Ui.Title(Loc.T("title"));
-            _titleBlock.FontSize = 17;
-            _titleBlock.Foreground = Ui.Brush(Ui.C.Text);
             _subtitleBlock = Ui.Muted(Loc.T("subtitle"));
-            _subtitleBlock.FontSize = 10.5;
-            _subtitleBlock.Margin = new Avalonia.Thickness(0, 3, 0, 16);
-            _mutedBlocks.Add(_subtitleBlock);
+            _subtitleBlock.FontSize = 10;
 
             _platformBlock = Ui.Badge(OperatingSystem.IsWindows() ? "WINDOWS" : "LINUX",
-                Ui.Brush(Ui.C.Accent), Ui.Brush(Ui.C.SurfaceStrong));
-
-            var statusDot = new Border
-            {
-                Width = 8,
-                Height = 8,
-                CornerRadius = new CornerRadius(4),
-                Background = Ui.Ok,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Avalonia.Thickness(0, 0, 7, 0)
-            };
-            var statusLabel = Ui.Muted(Loc.T("status_ready"));
-            statusLabel.FontSize = 11.5;
-            var sideStatus = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-            sideStatus.Children.Add(statusDot);
-            sideStatus.Children.Add(statusLabel);
+                Ui.Brush(Ui.C.Muted), Ui.Brush(Ui.C.Surface));
 
             _sidebarVpnChip = Ui.ChipText("VPN: --");
 
-            var sidebarPanel = new StackPanel { Margin = new Avalonia.Thickness(18, 22, 16, 16), Spacing = 5 };
-            var brandRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+            // ---- Kenar çubuğu ----
+            var sidebarPanel = new StackPanel { Margin = new Thickness(14, 20, 12, 14), Spacing = 2 };
+
+            var brandRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
             var brandMark = new Border
             {
-                Width = 36, Height = 36,
+                Width = 34,
+                Height = 34,
                 CornerRadius = new CornerRadius(9),
-                Background = Ui.Brush(Ui.C.Accent),
-                Child = new TextBlock
-                {
-                    Text = "B",
-                    Foreground = Ui.Brush(Ui.C.AccentText),
-                    FontSize = 18,
-                    FontWeight = FontWeight.Bold,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                }
+                Background = Ui.Brush(Ui.C.SurfaceStrong),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = Ui.Owl(19, Ui.Brush(Ui.C.Accent)),
             };
-            brandRow.Children.Add(brandMark); Grid.SetColumn(brandMark, 0);
-            var brandText = new StackPanel { Spacing = 1, Margin = new Avalonia.Thickness(10, 0, 0, 0) };
+            var brandText = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 0 };
+            _titleBlock.FontSize = 14.5;
             brandText.Children.Add(_titleBlock);
             brandText.Children.Add(_subtitleBlock);
-            brandRow.Children.Add(brandText); Grid.SetColumn(brandText, 1);
-            brandRow.Children.Add(_platformBlock); Grid.SetColumn(_platformBlock, 2);
-            sidebarPanel.Children.Add(brandRow);
+            brandRow.Children.Add(brandMark);
+            brandRow.Children.Add(brandText);
 
-            sidebarPanel.Children.Add(new Border { Height = 18, Background = Brushes.Transparent });
+            var brandHeader = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(4, 0, 0, 0) };
+            brandHeader.Children.Add(brandRow);
+            Grid.SetColumn(brandRow, 0);
+            _platformBlock.VerticalAlignment = VerticalAlignment.Top;
+            brandHeader.Children.Add(_platformBlock);
+            Grid.SetColumn(_platformBlock, 1);
+
+            sidebarPanel.Children.Add(brandHeader);
+            sidebarPanel.Children.Add(new Border { Height = 14, Background = Brushes.Transparent });
             sidebarPanel.Children.Add(NavGroupLabel(Loc.T("nav_workspace")));
-            sidebarPanel.Children.Add(NavButton("nav_game", "game"));
-            sidebarPanel.Children.Add(NavButton("nav_friends", "friends"));
-            sidebarPanel.Children.Add(NavButton("nav_learn", "learn"));
+            sidebarPanel.Children.Add(NavButton("nav_game", "game", "game"));
+            sidebarPanel.Children.Add(NavButton("nav_friends", "friends", "users"));
+            sidebarPanel.Children.Add(NavButton("nav_learn", "learn", "learn"));
             sidebarPanel.Children.Add(NavGroupLabel(Loc.T("nav_tools")));
-            sidebarPanel.Children.Add(NavButton("nav_settings", "settings"));
-            sidebarPanel.Children.Add(NavButton("nav_log", "log"));
+            sidebarPanel.Children.Add(NavButton("nav_settings", "settings", "settings"));
+            sidebarPanel.Children.Add(NavButton("nav_log", "log", "log"));
 
-            var sidebarFooter = new Border
+            var sidebarFooter = new StackPanel { Margin = new Thickness(2, 18, 2, 0), Spacing = 8 };
+            sidebarFooter.Children.Add(Ui.Divider());
+            var statusRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            var statusDot = new Border
             {
-                Background = Ui.Brush(Ui.C.Surface),
-                BorderBrush = Ui.Brush(Ui.C.Border),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new CornerRadius(9),
-                Padding = new Avalonia.Thickness(12),
-                Margin = new Avalonia.Thickness(0, 20, 0, 0),
+                Width = 7,
+                Height = 7,
+                CornerRadius = new CornerRadius(4),
+                Background = Ui.Ok,
+                VerticalAlignment = VerticalAlignment.Center,
             };
-            var footerStack = new StackPanel { Spacing = 9 };
-            footerStack.Children.Add(sideStatus);
-            footerStack.Children.Add(Ui.Chip(_sidebarVpnChip));
-            footerStack.Children.Add(new TextBlock
+            var statusLabel = Ui.Muted(Loc.T("status_ready"));
+            statusLabel.FontSize = 11;
+            statusRow.Children.Add(statusDot);
+            statusRow.Children.Add(statusLabel);
+            var vpnChipHost = Ui.Chip(_sidebarVpnChip);
+            vpnChipHost.Margin = new Thickness(0);
+            statusRow.Children.Add(vpnChipHost);
+            sidebarFooter.Children.Add(statusRow);
+            sidebarFooter.Children.Add(new TextBlock
             {
                 Text = Loc.T("active_target"),
                 Foreground = Ui.Brush(Ui.C.Muted),
                 FontSize = 9.5,
                 FontWeight = FontWeight.SemiBold,
-                Margin = new Avalonia.Thickness(0, 2, 0, 0),
+                Margin = new Thickness(0, 4, 0, -4),
             });
             _sidebarTargetText = new TextBlock
             {
@@ -181,32 +176,47 @@ namespace BlueLobby
                 MaxHeight = 48,
                 Opacity = 0.92,
             };
-            footerStack.Children.Add(_sidebarTargetText);
+            sidebarFooter.Children.Add(_sidebarTargetText);
             if (_settings.ShowMascot)
             {
+                var mascotRow = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 6,
+                    Margin = new Thickness(0, 2, 0, 0),
+                };
+                mascotRow.Children.Add(Ui.Owl(11, Ui.Brush(Ui.C.Muted)));
                 _mascotBlock = new TextBlock
                 {
-                    Text = "🤖  Mavi burada",
+                    Text = "Mavi burada",
                     FontSize = 11.5,
                     Foreground = Ui.Brush(Ui.C.Muted),
-                    Margin = new Avalonia.Thickness(0, 2, 0, 0),
                     RenderTransform = _mascotTransform = new TranslateTransform(),
                 };
-                footerStack.Children.Add(_mascotBlock);
-                _mascotBlock.Tapped += (_, _) => _ = new ConfirmDialog("Mavi 🤖", new[] { Loc.T("mascot_tip") }, Loc.T("yes"), string.Empty).ShowDialog<bool>(this);
+                mascotRow.Children.Add(_mascotBlock);
+                sidebarFooter.Children.Add(mascotRow);
+                _mascotBlock.Tapped += (_, _) => _ = new ConfirmDialog("Mavi", new[] { Loc.T("mascot_tip") }, Loc.T("yes"), string.Empty).ShowDialog<bool>(this);
             }
-            sidebarFooter.Child = footerStack;
-            sidebarPanel.Children.Add(sidebarFooter);
 
+            var sidebarContent = new Grid
+            {
+                RowDefinitions = new RowDefinitions("*,Auto"),
+                Children =
+                {
+                    new StackPanel { Children = { sidebarPanel } },
+                    sidebarFooter,
+                },
+                Background = Ui.Brush(Ui.C.Sidebar),
+            };
             _sidebarBorder = new Border
             {
-                Background = Ui.Brush(Ui.C.Sidebar),
+                Child = sidebarContent,
                 BorderBrush = Ui.Brush(Ui.C.Border),
-                BorderThickness = new Avalonia.Thickness(0, 0, 1, 0),
-                Child = sidebarPanel
+                BorderThickness = new Thickness(0, 0, 1, 0),
             };
             _themedBorders.Add(_sidebarBorder);
 
+            // ---- Bölüm panelleri ----
             _pnlGame = BuildGameSection();
             _pnlFriends = BuildFriendsSection();
             _pnlSettings = BuildSettingsSection();
@@ -222,36 +232,41 @@ namespace BlueLobby
             sections.Children.Add(_pnlWizard);
             sections.Children.Add(_pnlLearn);
 
+            // ---- Dar ekran alt gezinmesi ----
             _compactNav = new WrapPanel
             {
                 Orientation = Orientation.Horizontal,
                 IsVisible = false,
-                Margin = new Avalonia.Thickness(0, 0, 0, 14),
+                Margin = new Thickness(0, 0, 0, 14),
             };
-            foreach ((string key, string section) in new[]
+            foreach ((string key, string section, string icon) in new[]
             {
-                ("nav_game", "game"), ("nav_friends", "friends"), ("nav_learn", "learn"),
-                ("nav_settings", "settings"), ("nav_log", "log"),
+                ("nav_game", "game", "game"), ("nav_friends", "friends", "users"),
+                ("nav_learn", "learn", "learn"), ("nav_settings", "settings", "settings"),
+                ("nav_log", "log", "log"),
             })
             {
-                var btn = Ui.Btn(Loc.T(key), Ui.BtnKind.Ghost);
-                btn.Tag = section;
-                ConfigureNavigationButton(btn);
-                btn.Click += Nav_Click;
-                btn.Margin = new Avalonia.Thickness(0, 0, 6, 6);
+                var btn = NavButton(key, section, icon);
+                btn.Margin = new Thickness(0, 0, 6, 6);
+                _navButtons.Remove(btn);
                 _compactNavButtons.Add(btn);
-                _allButtons.Add(btn);
+                _allButtons.Remove(btn);
                 _compactNav.Children.Add(btn);
             }
 
-            _pageEyebrow = Ui.Muted(Loc.T("brand_eyebrow"));
-            _pageEyebrow.FontSize = 10.5;
-            _pageEyebrow.FontWeight = FontWeight.SemiBold;
-            _pageEyebrow.Opacity = 0.82;
+            // ---- Sayfa başlığı ----
+            _pageEyebrow = new TextBlock
+            {
+                Text = Loc.T("brand_eyebrow"),
+                FontSize = 10,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = Ui.Brush(Ui.C.Muted),
+                Opacity = 0.9,
+            };
             _pageTitle = Ui.PageTitle("Oyun");
-            _pageSubtitle = Ui.Muted("Oyunu seç, durumu kontrol et ve tek yerden yönet.");
-            _pageSubtitle.FontSize = 13;
-            _pageSubtitle.Margin = new Avalonia.Thickness(0, 4, 0, 0);
+            _pageSubtitle = Ui.Muted(Loc.T("page_game_subtitle"));
+            _pageSubtitle.FontSize = 12.5;
+            _pageSubtitle.Margin = new Thickness(0, 3, 0, 0);
             _mutedBlocks.Add(_pageSubtitle);
 
             var pageHeader = new StackPanel { Spacing = 0 };
@@ -262,14 +277,14 @@ namespace BlueLobby
             {
                 Background = Brushes.Transparent,
                 BorderBrush = Ui.Brush(Ui.C.BorderSubtle),
-                BorderThickness = new Avalonia.Thickness(0, 0, 0, 1),
-                CornerRadius = new CornerRadius(0),
-                Padding = new Avalonia.Thickness(0, 0, 0, 16),
+                BorderThickness = new Thickness(0, 0, 0, 1),
+                Padding = new Thickness(0, 0, 0, 14),
                 Child = pageHeader,
-                Margin = new Avalonia.Thickness(0, 0, 0, 18),
+                Margin = new Thickness(0, 0, 0, 16),
             };
             _themedBorders.Add(_topHeader);
 
+            // ---- Durum çubuğu ----
             _statusBarText = Ui.Muted("");
             _statusBarText.FontSize = 11.5;
             _mutedBlocks.Add(_statusBarText);
@@ -277,11 +292,11 @@ namespace BlueLobby
             {
                 Background = Ui.Brush(Ui.C.Surface),
                 BorderBrush = Ui.Brush(Ui.C.Border),
-                BorderThickness = new Avalonia.Thickness(1),
+                BorderThickness = new Thickness(1),
                 CornerRadius = Ui.CardRadius,
-                Padding = new Avalonia.Thickness(12, 9),
+                Padding = new Thickness(12, 8),
                 Child = _statusBarText,
-                Margin = new Avalonia.Thickness(0, 14, 0, 0),
+                Margin = new Thickness(0, 12, 0, 0),
             };
             _themedBorders.Add(_statusBarBorder);
 
@@ -292,10 +307,7 @@ namespace BlueLobby
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             };
 
-            var contentGrid = new Grid
-            {
-                RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"),
-            };
+            var contentGrid = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto") };
             contentGrid.Children.Add(_compactNav);
             Grid.SetRow(_compactNav, 0);
             contentGrid.Children.Add(_topHeader);
@@ -311,17 +323,20 @@ namespace BlueLobby
                 Padding = Ui.PagePadding,
                 Child = contentGrid,
             };
-            _themedBorders.Add(content);
 
-            _mainColumns = new ColumnDefinitions("244,*");
+            _mainColumns = new ColumnDefinitions("240,*");
             var layout = new Grid { ColumnDefinitions = _mainColumns };
-            layout.Children.Add(_sidebarBorder); Grid.SetColumn(_sidebarBorder, 0);
-            layout.Children.Add(content); Grid.SetColumn(content, 1);
+            layout.Children.Add(_sidebarBorder);
+            Grid.SetColumn(_sidebarBorder, 0);
+            layout.Children.Add(content);
+            Grid.SetColumn(content, 1);
 
             SetSection(_section);
             ApplyResponsiveLayout();
             return layout;
         }
+
+        // ===================== Gezinti yardımcıları =====================
 
         private void UpdateSidebarTarget(string path)
         {
@@ -331,20 +346,27 @@ namespace BlueLobby
                 : path;
         }
 
+        private void StyleNavButtonState(Button button, bool selected)
+        {
+            button.Background = selected ? Ui.Brush(Ui.C.SurfaceStrong) : Brushes.Transparent;
+            button.Foreground = selected ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
+            button.BorderBrush = selected ? Ui.Brush(Ui.C.Accent) : Brushes.Transparent;
+            button.FontWeight = selected ? FontWeight.SemiBold : FontWeight.Medium;
+            if (button.Content is StackPanel stack && stack.Children.Count > 0 && stack.Children[0] is Path icon)
+                icon.Stroke = selected ? Ui.Brush(Ui.C.Accent) : Ui.Brush(Ui.C.Muted);
+        }
+
         private void ConfigureNavigationButton(Button button)
         {
             button.PointerEntered += (_, _) =>
             {
                 button.Background = Ui.Brush(Ui.C.Hover);
                 button.Foreground = Ui.Brush(Ui.C.Text);
-                button.BorderBrush = Ui.Brush(Ui.C.Border);
             };
             button.PointerExited += (_, _) =>
             {
                 bool selected = Equals(button.Tag as string, _section);
-                button.Background = selected ? Ui.Brush(Ui.C.SurfaceStrong) : Brushes.Transparent;
-                button.Foreground = selected ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
-                button.BorderBrush = selected ? Ui.Brush(Ui.C.Accent) : Brushes.Transparent;
+                StyleNavButtonState(button, selected);
             };
         }
 
@@ -355,59 +377,216 @@ namespace BlueLobby
                 Text = text,
                 Foreground = Ui.Brush(Ui.C.Muted),
                 FontSize = 9.5,
-                FontWeight = FontWeight.Bold,
-                Margin = new Avalonia.Thickness(10, 10, 0, 5),
-                Opacity = 0.72,
+                FontWeight = FontWeight.SemiBold,
+                Opacity = 0.75,
+                Margin = new Avalonia.Thickness(12, 10, 0, 4),
             };
         }
 
-        private Button NavButton(string locKey, string section)
+        private Button NavButton(string locKey, string section, string icon)
         {
-            var btn = Ui.Btn(Loc.T(locKey), Ui.BtnKind.Ghost);
-            btn.Tag = section;
+            var content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 10,
+            };
+            content.Children.Add(Ui.Icon(icon, 15, Ui.Brush(Ui.C.Muted)));
+            content.Children.Add(new TextBlock
+            {
+                Text = Loc.T(locKey),
+                FontFamily = new FontFamily("Inter"),
+                FontSize = 12.5,
+                FontWeight = FontWeight.Medium,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+
+            var btn = new Button
+            {
+                Content = content,
+                Tag = section,
+                Background = Brushes.Transparent,
+                Foreground = Ui.Brush(Ui.C.Muted),
+                BorderBrush = Brushes.Transparent,
+                BorderThickness = new Thickness(1),
+                CornerRadius = Ui.ButtonRadius,
+                Padding = new Thickness(12, 8),
+                MinHeight = 38,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+            };
             ConfigureNavigationButton(btn);
-            btn.HorizontalAlignment = HorizontalAlignment.Stretch;
-            btn.HorizontalContentAlignment = HorizontalAlignment.Left;
-            btn.Margin = new Avalonia.Thickness(0, 1, 0, 1);
-            btn.Padding = new Avalonia.Thickness(12, 9);
-            btn.MinHeight = 38;
             btn.Click += Nav_Click;
             _navButtons.Add(btn);
             _allButtons.Add(btn);
             return btn;
         }
 
+        private void Nav_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string section)
+                SetSection(section);
+        }
+
+        // ===================== Kart / alan yardımcıları =====================
+
+        private Control BuildCardHeader(string title, string subtitle, string icon, Control? badge = null)
+        {
+            var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            var label = new StackPanel { Spacing = 2 };
+            label.Children.Add(Ui.SectionTitle(title));
+            if (!string.IsNullOrEmpty(subtitle))
+                label.Children.Add(Ui.Muted(subtitle));
+            left.Children.Add(Ui.Icon(icon, 16, Ui.Brush(Ui.C.Accent)));
+            left.Children.Add(label);
+            header.Children.Add(left);
+            Grid.SetColumn(left, 0);
+            if (badge != null)
+            {
+                badge.VerticalAlignment = VerticalAlignment.Center;
+                header.Children.Add(badge);
+                Grid.SetColumn(badge, 1);
+            }
+            return new Border { Child = header, Margin = new Thickness(0, 0, 0, 12) };
+        }
+
+        private Control BuildTwoColumn(Control left, Control right)
+        {
+            if (Ui.TouchMode)
+            {
+                left.Margin = new Thickness(0, 0, 0, 12);
+                right.Margin = new Thickness(0);
+                var single = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto") };
+                single.Children.Add(left);
+                Grid.SetRow(left, 0);
+                single.Children.Add(right);
+                Grid.SetRow(right, 1);
+                return single;
+            }
+            left.Margin = new Thickness(0, 0, 6, 0);
+            right.Margin = new Thickness(6, 0, 0, 0);
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*") };
+            grid.Children.Add(left);
+            Grid.SetColumn(left, 0);
+            grid.Children.Add(right);
+            Grid.SetColumn(right, 1);
+            return grid;
+        }
+
+        private static void StyleField(Control control)
+        {
+            Ui.StyleInput(control);
+            switch (control)
+            {
+                case TextBox textBox:
+                    textBox.CornerRadius = new CornerRadius(8);
+                    break;
+                case ComboBox comboBox:
+                    comboBox.CornerRadius = new CornerRadius(8);
+                    break;
+                case ListBox listBox:
+                    listBox.CornerRadius = new CornerRadius(8);
+                    break;
+            }
+        }
+
+        private Grid FieldRow(string label, Control field)
+        {
+            StyleField(field);
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions($"{Ui.FieldLabelWidth},*"),
+            };
+            var lbl = new TextBlock
+            {
+                Text = label,
+                Foreground = Ui.Brush(Ui.C.Muted),
+                FontSize = 11.5,
+                FontWeight = FontWeight.Medium,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            grid.Children.Add(lbl);
+            Grid.SetColumn(lbl, 0);
+            grid.Children.Add(field);
+            Grid.SetColumn(field, 1);
+            return grid;
+        }
+
+        // ===================== Oyun bölümü =====================
+
+        private Control StatusCell(string label, TextBlock value, string detail)
+        {
+            var cell = new StackPanel { Spacing = 3 };
+            cell.Children.Add(new TextBlock
+            {
+                Text = label.ToUpperInvariant(),
+                Foreground = Ui.Brush(Ui.C.Muted),
+                FontSize = 9.5,
+                FontWeight = FontWeight.SemiBold,
+            });
+            cell.Children.Add(value);
+            cell.Children.Add(new TextBlock
+            {
+                Text = detail,
+                Foreground = Ui.Brush(Ui.C.Muted),
+                FontSize = 10.5,
+                TextWrapping = TextWrapping.Wrap,
+            });
+            return cell;
+        }
+
+        private Control VerticalRule()
+        {
+            return new Border
+            {
+                Width = 1,
+                Background = Ui.Brush(Ui.C.BorderSubtle),
+                Margin = new Thickness(10, 2, 10, 2),
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+        }
+
         private Control BuildGameSection()
         {
             var panel = new StackPanel { Spacing = 0 };
 
-            var purpose = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-            var purposeText = new StackPanel { Spacing = 4 };
-            purposeText.Children.Add(new TextBlock
-            {
-                Text = Loc.T("warn"),
-                Foreground = Ui.Warn,
-                FontWeight = FontWeight.SemiBold,
-                TextWrapping = TextWrapping.Wrap,
-            });
-            purposeText.Children.Add(Ui.Muted(Loc.T("setup_subtitle")));
-            purpose.Children.Add(purposeText);
-            var safeBadge = Ui.Badge("BACKUP PROTECTED", Ui.Ok, Ui.Brush(Ui.C.SurfaceStrong));
-            safeBadge.VerticalAlignment = VerticalAlignment.Center;
-            purpose.Children.Add(safeBadge);
-            Grid.SetColumn(safeBadge, 1);
-            panel.Children.Add(Ui.Card(purpose));
+            // (a) Durum şeridi: tek kart, beş istatistik bloğu.
+            // Not: her çip AYRI TextBlock örneğidir; Avalonia bir görsel öğenin iki
+            // parent altında bulunmasına izin vermez (kenar çubuğu kendi VPN çipine sahip).
+            _chipPatch = Ui.ChipText(Loc.T("patch_none"));
+            _chipEmu = Ui.ChipText(Loc.T("emu_missing"));
+            _chipCompat = Ui.ChipText("Uyumluluk: --");
+            _chipPing = Ui.ChipText("Ping: -- ms");
+            _chipVpn = Ui.ChipText("VPN: --");
 
-            var gameHeader = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Avalonia.Thickness(0, 2, 0, 8) };
-            var gameTitle = new StackPanel { Spacing = 2 };
-            gameTitle.Children.Add(Ui.SectionTitle(Loc.T("section_game_setup")));
-            gameTitle.Children.Add(Ui.Muted(Loc.T("game_manage_subtitle")));
-            gameHeader.Children.Add(gameTitle);
-            var browseBadge = Ui.Badge(OperatingSystem.IsWindows() ? "WINDOWS x64" : "LINUX x64",
-                Ui.Brush(Ui.C.Accent), Ui.Brush(Ui.C.SurfaceStrong));
-            browseBadge.VerticalAlignment = VerticalAlignment.Center;
-            gameHeader.Children.Add(browseBadge);
-            Grid.SetColumn(browseBadge, 1);
+            var statusRow = new StackPanel { Orientation = Orientation.Horizontal };
+            statusRow.Children.Add(StatusCell(Loc.T("status_component"), _chipEmu, Loc.T("status_component_detail")));
+            statusRow.Children.Add(VerticalRule());
+            statusRow.Children.Add(StatusCell(Loc.T("status_compat"), _chipCompat, Loc.T("status_compat_detail")));
+            statusRow.Children.Add(VerticalRule());
+            statusRow.Children.Add(StatusCell(Loc.T("status_patch"), _chipPatch, Loc.T("status_patch_detail")));
+            statusRow.Children.Add(VerticalRule());
+            statusRow.Children.Add(StatusCell(Loc.T("status_ping"), _chipPing, Loc.T("status_ping_detail")));
+            statusRow.Children.Add(VerticalRule());
+            statusRow.Children.Add(StatusCell(Loc.T("status_vpn"), _chipVpn, Loc.T("status_vpn_detail")));
+            panel.Children.Add(Ui.Card(statusRow));
+
+            // (b) Kütüphane + hedef kartları
+            _lstGames = new ListBox
+            {
+                MinHeight = 84,
+                MaxHeight = 190,
+                BorderThickness = new Thickness(0),
+            };
+            StyleField(_lstGames);
+            _lstGames.SelectionChanged += DiscoveredGame_SelectionChanged;
+
+            _btnDiscoverGames = Ui.BtnIcon(Loc.T("discover_games"), "search", Ui.BtnKind.Secondary);
+            _btnDiscoverGames.Click += BtnDiscoverGames_Click;
+
+            var libraryCard = new StackPanel { Spacing = 0 };
+            libraryCard.Children.Add(BuildCardHeader(Loc.T("section_installed_games"), Loc.T("discover_subtitle"), "search", _btnDiscoverGames));
+            libraryCard.Children.Add(_lstGames);
 
             _txtGameDir = new TextBox
             {
@@ -415,8 +594,8 @@ namespace BlueLobby
                 Text = _gameDir,
                 MinHeight = Ui.ButtonMinHeight,
             };
-            Ui.StyleInput(_txtGameDir);
-            var btnBrowse = Ui.Btn("📁  " + Loc.T("gamefolder"), Ui.BtnKind.Secondary);
+            StyleField(_txtGameDir);
+            var btnBrowse = Ui.BtnIcon(Loc.T("gamefolder"), "folder", Ui.BtnKind.Secondary);
             btnBrowse.Click += BtnBrowse_Click;
 
             var folderRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,10,Auto") };
@@ -429,91 +608,20 @@ namespace BlueLobby
             {
                 PlaceholderText = Loc.T("exe"),
                 MinHeight = Ui.ButtonMinHeight,
-                Margin = new Avalonia.Thickness(0, 8, 0, 0),
+                Margin = new Thickness(0, 10, 0, 0),
             };
-            Ui.StyleInput(_cmbExes);
+            StyleField(_cmbExes);
             _cmbExes.SelectionChanged += CmbExes_SelectionChanged;
 
-            var folderCard = new StackPanel { Spacing = 0 };
-            folderCard.Children.Add(gameHeader);
-            folderCard.Children.Add(folderRow);
-            folderCard.Children.Add(_cmbExes);
-            panel.Children.Add(Ui.Card(folderCard));
+            var targetCard = new StackPanel { Spacing = 0 };
+            var platformBadge = Ui.Badge(OperatingSystem.IsWindows() ? "WINDOWS x64" : "LINUX x64");
+            targetCard.Children.Add(BuildCardHeader(Loc.T("section_game_setup"), Loc.T("game_manage_subtitle"), "folder", platformBadge));
+            targetCard.Children.Add(folderRow);
+            targetCard.Children.Add(_cmbExes);
 
-            _btnDiscoverGames = Ui.Btn(Loc.T("discover_games"), Ui.BtnKind.Secondary);
-            _btnDiscoverGames.Click += BtnDiscoverGames_Click;
-            _lstGames = new ListBox
-            {
-                MinHeight = 84,
-                MaxHeight = 190,
-                BorderThickness = new Avalonia.Thickness(0),
-            };
-            Ui.StyleInput(_lstGames);
-            _lstGames.SelectionChanged += DiscoveredGame_SelectionChanged;
+            panel.Children.Add(BuildTwoColumn(libraryCard, targetCard));
 
-            var libraryHeader = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-            var libraryText = new StackPanel { Spacing = 3 };
-            libraryText.Children.Add(Ui.SectionTitle(Loc.T("section_installed_games")));
-            libraryText.Children.Add(Ui.Muted(Loc.T("discover_subtitle")));
-            libraryHeader.Children.Add(libraryText);
-            libraryHeader.Children.Add(_btnDiscoverGames);
-            Grid.SetColumn(_btnDiscoverGames, 1);
-
-            var libraryBody = new StackPanel { Spacing = 8 };
-            libraryBody.Children.Add(libraryHeader);
-            libraryBody.Children.Add(_lstGames);
-            panel.Children.Add(Ui.Card(libraryBody));
-
-            _chipPatch = Ui.ChipText(Loc.T("patch_none"));
-            _chipEmu = Ui.ChipText(Loc.T("emu_missing"));
-            _chipCompat = Ui.ChipText("Uyumluluk: --");
-            _chipPing = Ui.ChipText("Ping: -- ms");
-            // Sidebar ve durum kartı ayrı TextBlock örnekleri kullanmalı; Avalonia bir visual
-            // elementin aynı anda iki parent altında bulunmasına izin vermez.
-            _chipVpn = Ui.ChipText("VPN: --");
-
-            var statusWrap = new WrapPanel { Orientation = Orientation.Horizontal };
-            statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_patch"), _chipPatch, Loc.T("status_patch_detail")));
-            statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_component"), _chipEmu, Loc.T("status_component_detail")));
-            statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_compat"), _chipCompat, Loc.T("status_compat_detail")));
-            statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_ping"), _chipPing, Loc.T("status_ping_detail")));
-            statusWrap.Children.Add(Ui.StatusTile(Loc.T("status_vpn"), _chipVpn, Loc.T("status_vpn_detail")));
-            panel.Children.Add(statusWrap);
-
-            var btnApply = Ui.Btn("⚡  " + Loc.T("apply"), Ui.BtnKind.Primary);
-            btnApply.MinWidth = 170;
-            btnApply.Click += BtnApply_Click;
-            var btnLaunch = Ui.Btn("▶  " + Loc.T("launch"), Ui.BtnKind.Secondary);
-            btnLaunch.MinWidth = 150;
-            btnLaunch.Click += BtnLaunch_Click;
-            var btnRestore = Ui.Btn("↩  " + Loc.T("restore"), Ui.BtnKind.Secondary);
-            btnRestore.MinWidth = 130;
-            btnRestore.Click += BtnRestore_Click;
-            var btnVpn = Ui.Btn("⬇  " + Loc.T("dl_radmin"), Ui.BtnKind.Secondary);
-            btnVpn.Click += BtnVpnDownload_Click;
-
-            var actionInner = new StackPanel { Spacing = 8 };
-            actionInner.Children.Add(new TextBlock
-            {
-                Text = Loc.T("section_main_actions"),
-                Foreground = Ui.Brush(Ui.C.Muted),
-                FontSize = 11.5,
-                FontWeight = FontWeight.SemiBold,
-            });
-            actionInner.Children.Add(Ui.Muted(Loc.T("actions_subtitle")));
-            actionInner.Children.Add(Ui.BtnRow(btnApply, btnLaunch, btnRestore, btnVpn));
-
-            panel.Children.Add(new Border
-            {
-                Background = Ui.Brush(Ui.C.SurfaceStrong),
-                BorderBrush = Ui.Brush(Ui.C.Border),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new CornerRadius(10),
-                Padding = new Avalonia.Thickness(17, 15),
-                Margin = new Avalonia.Thickness(0, 2, 0, 12),
-                Child = actionInner,
-            });
-
+            // (c) Oturum kartı
             _txtPlayerName = new TextBox { Text = _settings.PlayerName, MinHeight = Ui.ButtonMinHeight };
             _txtAppId = new TextBox { Text = _settings.AppId, MinHeight = Ui.ButtonMinHeight };
             _txtAppId.TextChanged += (_, _) => _ = UpdateSystemStatusAsync();
@@ -524,22 +632,15 @@ namespace BlueLobby
                 MinHeight = Ui.ButtonMinHeight,
             };
             _cmbLanguage = new ComboBox { SelectedIndex = 0, MinHeight = Ui.ButtonMinHeight };
-            Ui.StyleInput(_cmbLanguage);
             foreach (string lang in new[] { "english", "turkish", "german" })
                 _cmbLanguage.Items.Add(new ComboBoxItem { Content = lang });
 
-            var sessionWrap = new WrapPanel { Orientation = Orientation.Horizontal };
-            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("player"), _txtPlayerName));
-            sessionWrap.Children.Add(Ui.FieldCard("AppID", _txtAppId));
-            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("friendip"), _txtFriendIp));
-            sessionWrap.Children.Add(Ui.FieldCard(Loc.T("gamelang"), _cmbLanguage));
-
-            var sessionCard = new StackPanel { Spacing = 4 };
-            sessionCard.Children.Add(Ui.SectionTitle(Loc.T("section_session")));
-            sessionCard.Children.Add(Ui.Muted(Loc.T("session_subtitle")));
-            sessionCard.Children.Add(new Border { Height = 6, Background = Brushes.Transparent });
-            sessionCard.Children.Add(sessionWrap);
-            panel.Children.Add(Ui.Card(sessionCard));
+            var sessionLeft = new StackPanel { Spacing = 8 };
+            sessionLeft.Children.Add(FieldRow(Loc.T("player"), _txtPlayerName));
+            sessionLeft.Children.Add(FieldRow("AppID", _txtAppId));
+            var sessionRight = new StackPanel { Spacing = 8 };
+            sessionRight.Children.Add(FieldRow(Loc.T("friendip"), _txtFriendIp));
+            sessionRight.Children.Add(FieldRow(Loc.T("gamelang"), _cmbLanguage));
 
             _chkUnlockDlc = new CheckBox { Content = Loc.T("dlc") };
             _chkCustomBroadcast = new CheckBox { Content = Loc.T("broadcast"), IsChecked = true };
@@ -553,7 +654,7 @@ namespace BlueLobby
             Ui.StyleInput(_chkCustomBroadcast);
             Ui.StyleInput(_chkFirewall);
 
-            var advancedBody = new StackPanel { Spacing = 10 };
+            var advancedBody = new StackPanel { Spacing = 8 };
             advancedBody.Children.Add(Ui.Muted(Loc.T("advanced_subtitle")));
             advancedBody.Children.Add(_chkUnlockDlc);
             advancedBody.Children.Add(_chkCustomBroadcast);
@@ -563,109 +664,156 @@ namespace BlueLobby
                 Header = Loc.T("advanced_options"),
                 IsExpanded = false,
                 Content = Ui.Card(advancedBody, 0),
-                Margin = new Avalonia.Thickness(0, 0, 0, 12),
+                Margin = new Thickness(0, 12, 0, 0),
                 Foreground = Ui.Brush(Ui.C.Text),
-                Background = Ui.Brush(Ui.C.Surface),
             };
-            panel.Children.Add(advanced);
 
-            var btnFindEmu = Ui.Btn(Loc.T("find_emu"), Ui.BtnKind.Secondary);
+            var sessionInner = new StackPanel { Spacing = 0 };
+            sessionInner.Children.Add(BuildCardHeader(Loc.T("section_session"), Loc.T("session_subtitle"), "play"));
+            var sessionColumns = BuildTwoColumn(sessionLeft, sessionRight);
+            sessionColumns.Margin = new Thickness(0);
+            sessionInner.Children.Add(sessionColumns);
+            sessionInner.Children.Add(advanced);
+
+            // (d) Aksiyon çubuğu
+            var btnApply = Ui.BtnIcon(Loc.T("apply"), "zap", Ui.BtnKind.Primary);
+            btnApply.MinWidth = 170;
+            btnApply.Click += BtnApply_Click;
+            var btnLaunch = Ui.BtnIcon(Loc.T("launch"), "play", Ui.BtnKind.Secondary);
+            btnLaunch.MinWidth = 150;
+            btnLaunch.Click += BtnLaunch_Click;
+            var btnRestore = Ui.BtnIcon(Loc.T("restore"), "restore", Ui.BtnKind.Secondary);
+            btnRestore.MinWidth = 130;
+            btnRestore.Click += BtnRestore_Click;
+
+            var actionRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            var actionLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            actionLeft.Children.Add(btnRestore);
+            actionLeft.Children.Add(btnLaunch);
+            actionRow.Children.Add(actionLeft);
+            Grid.SetColumn(actionLeft, 0);
+            actionRow.Children.Add(btnApply);
+            Grid.SetColumn(btnApply, 1);
+
+            var actionInner = new StackPanel { Spacing = 0 };
+            actionInner.Children.Add(BuildCardHeader(Loc.T("section_main_actions"), Loc.T("actions_subtitle"), "zap"));
+            actionInner.Children.Add(actionRow);
+            panel.Children.Add(Ui.Card(actionInner));
+
+            // (e) Uyarı notu
+            var warnRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(4, 0, 4, 12),
+            };
+            warnRow.Children.Add(Ui.Icon("shield", 13, Ui.Warn));
+            warnRow.Children.Add(Ui.Muted(Loc.T("warn")));
+            panel.Children.Add(warnRow);
+
+            // (f) Araçlar
+            var btnFindEmu = Ui.BtnIcon(Loc.T("find_emu"), "search", Ui.BtnKind.Secondary);
             btnFindEmu.Click += BtnFindEmu_Click;
-            var btnAuto = Ui.Btn(Loc.T("autoscan"), Ui.BtnKind.Secondary);
+            var btnAuto = Ui.BtnIcon(Loc.T("autoscan"), "settings", Ui.BtnKind.Secondary);
             btnAuto.Click += BtnAutoSetup_Click;
-            var btnPing = Ui.Btn(Loc.T("ping_btn"), Ui.BtnKind.Secondary);
+            var btnPing = Ui.BtnIcon(Loc.T("ping_btn"), "zap", Ui.BtnKind.Secondary);
             btnPing.Click += BtnPingTest_Click;
-            var btnShare = Ui.Btn("🔗  " + Loc.T("share_profile"), Ui.BtnKind.Secondary);
+            var btnShare = Ui.BtnIcon(Loc.T("share_profile"), "users", Ui.BtnKind.Secondary);
             btnShare.Click += BtnShareProfile_Click;
-            var btnImport = Ui.Btn("📥  " + Loc.T("import_profile"), Ui.BtnKind.Secondary);
+            var btnImport = Ui.BtnIcon(Loc.T("import_profile"), "download", Ui.BtnKind.Secondary);
             btnImport.Click += BtnImportProfile_Click;
+            var btnVpn = Ui.BtnIcon(Loc.T("dl_radmin"), "download", Ui.BtnKind.Secondary);
+            btnVpn.Click += BtnVpnDownload_Click;
 
-            var toolBody = new StackPanel { Spacing = 6 };
+            var toolBody = new StackPanel { Spacing = 8 };
             toolBody.Children.Add(Ui.Muted(Loc.T("tools_subtitle")));
-            toolBody.Children.Add(Ui.BtnRow(btnFindEmu, btnAuto, btnPing, btnShare, btnImport));
+            toolBody.Children.Add(Ui.BtnRow(btnFindEmu, btnAuto, btnPing, btnShare, btnImport, btnVpn));
             var toolExpander = new Expander
             {
                 Header = Loc.T("tools"),
                 IsExpanded = false,
                 Content = Ui.Card(toolBody, 0),
-                Margin = new Avalonia.Thickness(0, 0, 0, 12),
+                Margin = new Thickness(0, 0, 0, 12),
                 Foreground = Ui.Brush(Ui.C.Text),
-                Background = Ui.Brush(Ui.C.Surface),
             };
             panel.Children.Add(toolExpander);
-
 
             return panel;
         }
 
+        // ===================== Arkadaşlar bölümü =====================
+
         private Control BuildFriendsSection()
         {
             _txtFriendName = new TextBox { Watermark = Loc.T("fname"), MinHeight = Ui.ButtonMinHeight };
+            StyleField(_txtFriendName);
             _txtFriendIpNew = new TextBox { Watermark = Loc.T("fip"), MinHeight = Ui.ButtonMinHeight };
+            StyleField(_txtFriendIpNew);
 
-            var btnAdd = Ui.Btn(Loc.T("add"), Ui.BtnKind.Primary);
+            var btnAdd = Ui.BtnIcon(Loc.T("add"), "users", Ui.BtnKind.Primary);
             btnAdd.Click += BtnAddFriend_Click;
 
-            var addFields = new WrapPanel { Orientation = Orientation.Horizontal };
-            addFields.Children.Add(Ui.FieldCard(Loc.T("fname"), _txtFriendName));
-            addFields.Children.Add(Ui.FieldCard(Loc.T("fip"), _txtFriendIpNew));
+            var formRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,10,*,12,Auto") };
+            formRow.Children.Add(_txtFriendName);
+            Grid.SetColumn(_txtFriendName, 0);
+            formRow.Children.Add(_txtFriendIpNew);
+            Grid.SetColumn(_txtFriendIpNew, 2);
+            formRow.Children.Add(btnAdd);
+            Grid.SetColumn(btnAdd, 4);
+            btnAdd.VerticalAlignment = VerticalAlignment.Center;
 
             _lstFriends = new ListBox
             {
                 MinHeight = 300,
                 MaxHeight = 420,
-                BorderThickness = new Avalonia.Thickness(0),
+                BorderThickness = new Thickness(0),
             };
-            Ui.StyleInput(_lstFriends);
+            StyleField(_lstFriends);
             _lstFriends.DoubleTapped += LstFriends_DoubleTapped;
 
-            var btnUse = Ui.Btn(Loc.T("use"), Ui.BtnKind.Primary);
+            var btnUse = Ui.BtnIcon(Loc.T("use"), "restore", Ui.BtnKind.Secondary);
             btnUse.Click += (_, _) =>
             {
                 if (_lstFriends?.SelectedItem is not FriendEntry selected || _txtFriendIp == null)
                     return;
                 _txtFriendIp.Text = selected.Ip;
                 SetSection("game");
-                Log($"👥 {Loc.T("friend_used")}: {selected.Ip}");
+                Log($"{Loc.T("friend_used")}: {selected.Ip}");
             };
 
-            var btnRemove = Ui.Btn(Loc.T("remove"), Ui.BtnKind.Danger);
+            var btnRemove = Ui.BtnIcon(Loc.T("remove"), "log", Ui.BtnKind.Danger);
             btnRemove.Click += BtnRemoveFriend_Click;
 
-            var formHeader = new StackPanel { Spacing = 3 };
-            formHeader.Children.Add(Ui.SectionTitle(Loc.T("friends")));
-            formHeader.Children.Add(Ui.Muted("İsim ve IP bilgisini kaydet. Çift tıklama hızlı kullanım için desteklenir."));
-
             var listHeader = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
-            listHeader.Children.Add(Ui.SectionTitle("Kayıtlı oyuncular"));
+            var listTitle = Ui.SectionTitle("Kayıtlı oyuncular");
+            listTitle.VerticalAlignment = VerticalAlignment.Center;
+            listHeader.Children.Add(listTitle);
+            Grid.SetColumn(listTitle, 0);
             listHeader.Children.Add(btnUse);
             Grid.SetColumn(btnUse, 1);
             listHeader.Children.Add(btnRemove);
             Grid.SetColumn(btnRemove, 2);
 
-            var panel = new StackPanel();
-            panel.Children.Add(Ui.Card(new StackPanel
-            {
-                Spacing = 8,
-                Children = { formHeader, addFields, btnAdd }
-            }));
-            panel.Children.Add(Ui.Card(new StackPanel
-            {
-                Spacing = 8,
-                Children =
-                {
-                    listHeader,
-                    Ui.Muted("Seçili oyuncuyu oyun ekranındaki Arkadaş IP alanına gönder."),
-                    _lstFriends,
-                }
-            }, 0));
-            return panel;
+            var inner = new StackPanel { Spacing = 10 };
+            inner.Children.Add(BuildCardHeader(
+                Loc.T("friends"),
+                "İsim ve IP adresini kaydedin; çift tıklama hızlı kullanım için desteklenir.",
+                "users"));
+            inner.Children.Add(formRow);
+            inner.Children.Add(Ui.Divider());
+            inner.Children.Add(listHeader);
+            inner.Children.Add(Ui.Muted("Seçilen oyuncunun IP'si Oyun sekmesindeki Arkadaş IP alanına aktarılır."));
+            inner.Children.Add(_lstFriends);
+
+            return Ui.Card(inner, 0);
         }
+
+        // ===================== Ayarlar bölümü =====================
 
         private Control BuildSettingsSection()
         {
             var cmbTheme = new ComboBox { MinHeight = Ui.ButtonMinHeight };
-            Ui.StyleInput(cmbTheme);
             foreach ((string tag, string key) in new[] { ("gece", "theme_gece"), ("gunduz", "theme_gunduz"), ("pembe", "theme_pembe") })
             {
                 var item = new ComboBoxItem { Content = Loc.T(key), Tag = tag };
@@ -675,7 +823,6 @@ namespace BlueLobby
             cmbTheme.SelectionChanged += CmbTheme_SelectionChanged;
 
             var cmbLang = new ComboBox { MinHeight = Ui.ButtonMinHeight };
-            Ui.StyleInput(cmbLang);
             foreach ((string tag, string key) in new[] { ("tr", "lang_tr"), ("en", "lang_en"), ("de", "lang_de") })
             {
                 var item = new ComboBoxItem { Content = Loc.T(key), Tag = tag };
@@ -691,33 +838,34 @@ namespace BlueLobby
 
             var btnFullscreen = Ui.Btn(Loc.T("fullscreen"), Ui.BtnKind.Secondary);
             btnFullscreen.Click += (_, _) => ToggleFullscreen();
-            var btnWizard = Ui.Btn("🧙  " + Loc.T("setup_wizard_again"), Ui.BtnKind.Secondary);
+            var btnWizard = Ui.BtnIcon(Loc.T("setup_wizard_again"), "learn", Ui.BtnKind.Secondary);
             btnWizard.Click += (_, _) => { _wizardStep = 1; SetSection("wizard"); RenderWizardStep(); };
 
             var appearance = new StackPanel { Spacing = 4 };
-            appearance.Children.Add(Ui.SectionTitle("Görünüm"));
-            appearance.Children.Add(Ui.Muted("Tema ve dil değişiklikleri anında uygulanır."));
-            appearance.Children.Add(Ui.FieldCard(Loc.T("theme"), cmbTheme));
-            appearance.Children.Add(Ui.FieldCard(Loc.T("uilang"), cmbLang));
+            appearance.Children.Add(BuildCardHeader("Görünüm", "Tema ve dil değişiklikleri anında uygulanır.", "owl"));
+            appearance.Children.Add(FieldRow(Loc.T("theme"), cmbTheme));
+            appearance.Children.Add(FieldRow(Loc.T("uilang"), cmbLang));
 
-            var behavior = new StackPanel { Spacing = 8 };
-            behavior.Children.Add(Ui.SectionTitle("Davranış"));
-            behavior.Children.Add(Ui.Muted("Ekranın kullanım biçimini ve yardımcı öğeleri belirle."));
+            var behavior = new StackPanel { Spacing = 10 };
+            behavior.Children.Add(BuildCardHeader("Davranış", "Ekranın kullanım biçimini ve yardımcı öğeleri belirle.", "settings"));
             behavior.Children.Add(chkTouch);
             behavior.Children.Add(chkMascot);
             behavior.Children.Add(Ui.BtnRow(btnFullscreen));
 
             var setup = new StackPanel { Spacing = 8 };
-            setup.Children.Add(Ui.SectionTitle("Kurulum"));
-            setup.Children.Add(Ui.Muted("İlk kurulum sihirbazını yeniden açabilir veya normal Oyun ekranına dönebilirsin."));
+            setup.Children.Add(BuildCardHeader("Kurulum", "İlk kurulum sihirbazını yeniden açabilirsin; normal Oyun ekranına dönersin.", "restore"));
             setup.Children.Add(Ui.BtnRow(btnWizard));
 
-            var panel = new StackPanel { Spacing = 12 };
-            panel.Children.Add(Ui.Card(appearance));
-            panel.Children.Add(Ui.Card(behavior));
+            var appearanceCard = Ui.Card(appearance);
+            var behaviorCard = Ui.Card(behavior);
+
+            var panel = new StackPanel { Spacing = 0 };
+            panel.Children.Add(BuildTwoColumn(appearanceCard, behaviorCard));
             panel.Children.Add(Ui.Card(setup, 0));
             return panel;
         }
+
+        // ===================== Log bölümü =====================
 
         private Control BuildLogSection()
         {
@@ -729,20 +877,21 @@ namespace BlueLobby
                 Text = _logBuffer,
                 MinHeight = 460,
                 VerticalAlignment = VerticalAlignment.Stretch,
-                FontFamily = new FontFamily("monospace"),
-                Background = Ui.Brush(Ui.C.Window),
+                FontFamily = new FontFamily("Consolas, monospace"),
                 Foreground = Ui.Brush(Ui.C.Log),
-                BorderThickness = new Avalonia.Thickness(0),
-                Padding = new Avalonia.Thickness(4),
+                Background = Ui.Brush(Ui.C.Input),
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(6),
             };
-            Ui.StyleInput(_logBox);
-            _logBox.Background = Ui.Brush(Ui.C.Input);
+            StyleField(_logBox);
             _logBox.Foreground = Ui.Brush(Ui.C.Log);
-            _logBox.FontFamily = new FontFamily("monospace");
+            _logBox.FontFamily = new FontFamily("Consolas, monospace");
             ScrollViewer.SetVerticalScrollBarVisibility(_logBox, ScrollBarVisibility.Auto);
 
-            var btnCopy = Ui.Btn(Loc.T("copy")); btnCopy.Click += async (_, _) => await CopyTextAsync(_logBox.Text);
-            var btnExport = Ui.Btn(Loc.T("export")); btnExport.Click += BtnExportLog_Click;
+            var btnCopy = Ui.Btn(Loc.T("copy"));
+            btnCopy.Click += async (_, _) => await CopyTextAsync(_logBox.Text);
+            var btnExport = Ui.Btn(Loc.T("export"));
+            btnExport.Click += BtnExportLog_Click;
             var btnClear = Ui.Btn(Loc.T("clear"), Ui.BtnKind.Danger);
             btnClear.Click += async (_, _) =>
             {
@@ -756,34 +905,20 @@ namespace BlueLobby
                 _logBox.Text = string.Empty;
             };
 
-            return Ui.Card(new StackPanel
-            {
-                Spacing = 10,
-                Children =
-                {
-                    Ui.SectionTitle(Loc.T("section_activity")),
-                    Ui.Muted(Loc.T("activity_subtitle")),
-                    Ui.Surface(_logBox),
-                    Ui.BtnRow(btnCopy, btnExport, btnClear),
-                }
-            }, 0);
+            var inner = new StackPanel { Spacing = 10 };
+            inner.Children.Add(BuildCardHeader(Loc.T("section_activity"), Loc.T("activity_subtitle"), "log"));
+            inner.Children.Add(_logBox);
+            inner.Children.Add(Ui.BtnRow(btnCopy, btnExport, btnClear));
+
+            return Ui.Card(inner, 0);
         }
 
-        // ===================== Bölüm / tema / maskot =====================
-
-        private void Nav_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is string section)
-            {
-                SetSection(section);
-            }
-        }
-
-        // ===================== Kurulum sihirbazı (madde A) =====================
+        // ===================== Kurulum sihirbazı =====================
 
         private Control BuildWizardSection()
         {
             _lblWizardTitle = Ui.Title(string.Empty);
+            _lblWizardSub = Ui.Muted(string.Empty);
 
             _wizardBody = new StackPanel { Spacing = 10 };
 
@@ -791,25 +926,128 @@ namespace BlueLobby
             _btnWizBack.Click += (_, _) => { if (_wizardStep > 1) { _wizardStep--; RenderWizardStep(); } };
             _btnWizNext = Ui.Btn("İleri →", Ui.BtnKind.Primary);
             _btnWizNext.Click += (_, _) => { if (_wizardStep < 5) { _wizardStep++; RenderWizardStep(); } };
-            _btnWizFinish = Ui.Btn("✅ Bitir — Panele geç", Ui.BtnKind.Primary);
+            _btnWizFinish = Ui.Btn("Bitir — Panele geç", Ui.BtnKind.Primary);
             _btnWizFinish.Click += (_, _) => WizFinish();
 
-            var inner = new StackPanel { Spacing = 12 };
-            inner.Children.Add(_lblWizardTitle);
-            inner.Children.Add(_wizardBody);
-            inner.Children.Add(Ui.BtnRow(_btnWizBack, _btnWizNext, _btnWizFinish));
+            var navRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            navRow.Children.Add(_btnWizBack);
+            Grid.SetColumn(_btnWizBack, 0);
+            var navRight = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            navRight.Children.Add(_btnWizNext);
+            navRight.Children.Add(_btnWizFinish);
+            navRow.Children.Add(navRight);
+            Grid.SetColumn(navRight, 1);
 
-            var panel = new StackPanel();
-            panel.Children.Add(Ui.Card(inner, 0));
-            return panel;
+            var inner = new StackPanel { Spacing = 14 };
+            inner.Children.Add(_lblWizardTitle);
+            inner.Children.Add(_lblWizardSub);
+            inner.Children.Add(BuildWizardStepper());
+            inner.Children.Add(Ui.Divider());
+            inner.Children.Add(_wizardBody);
+            inner.Children.Add(navRow);
+
+            return Ui.Card(inner, 0);
+        }
+
+        private static string WizardStepName(int step) => step switch
+        {
+            1 => "Klasör",
+            2 => "Bileşen",
+            3 => "Ağ",
+            4 => "Uygulama",
+            _ => "Oyna",
+        };
+
+        private StackPanel BuildWizardStepper()
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, Margin = new Thickness(0, 4, 0, 4) };
+            for (int i = 0; i < 5; i++)
+            {
+                var num = new TextBlock
+                {
+                    Text = (i + 1).ToString(),
+                    FontSize = 11.5,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = Ui.Brush(Ui.C.Muted),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                var dot = new Border
+                {
+                    Width = 24,
+                    Height = 24,
+                    CornerRadius = new CornerRadius(12),
+                    Background = Ui.Brush(Ui.C.SurfaceStrong),
+                    BorderBrush = Ui.Brush(Ui.C.BorderSubtle),
+                    BorderThickness = new Thickness(1),
+                    Child = num,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                var label = new TextBlock
+                {
+                    Text = WizardStepName(i + 1),
+                    FontSize = 11,
+                    Foreground = Ui.Brush(Ui.C.Muted),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(7, 0, 0, 0),
+                };
+                var step = new StackPanel { Orientation = Orientation.Horizontal };
+                step.Children.Add(dot);
+                step.Children.Add(label);
+                row.Children.Add(step);
+                if (i < 4)
+                {
+                    row.Children.Add(new Border
+                    {
+                        Width = 22,
+                        Height = 1,
+                        Background = Ui.Brush(Ui.C.BorderSubtle),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(9, 0, 9, 0),
+                    });
+                }
+                _wizardStepper.Add((dot, label));
+            }
+            return row;
+        }
+
+        private void UpdateWizardStepper()
+        {
+            for (int i = 0; i < _wizardStepper.Count; i++)
+            {
+                (Border dot, TextBlock label) = _wizardStepper[i];
+                bool done = i + 1 < _wizardStep;
+                bool active = i + 1 == _wizardStep;
+                dot.Background = done ? Ui.Ok : active ? Ui.Brush(Ui.C.Accent) : Ui.Brush(Ui.C.SurfaceStrong);
+                dot.BorderBrush = done ? Ui.Ok : active ? Ui.Brush(Ui.C.Accent) : Ui.Brush(Ui.C.BorderSubtle);
+                if (dot.Child is TextBlock num)
+                {
+                    num.Text = done ? "\u2713" : (i + 1).ToString();
+                    num.Foreground = done || active ? Brushes.White : Ui.Brush(Ui.C.Muted);
+                }
+                label.Foreground = done || active ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
+                label.FontWeight = active ? FontWeight.SemiBold : FontWeight.Medium;
+            }
         }
 
         private void RenderWizardStep()
         {
             if (_wizardBody == null || _lblWizardTitle == null) return;
+            UpdateWizardStepper();
 
             _wizardBody.Children.Clear();
             _lblWizardTitle.Text = $"Kurulum Sihirbazı — Adım {_wizardStep}/5";
+            if (_lblWizardSub != null)
+            {
+                _lblWizardSub.Text = _wizardStep switch
+                {
+                    1 => "Oyunun kurulu olduğu klasörü seçin.",
+                    2 => "Bileşen dosyasını bilgisayarınızda bulun.",
+                    3 => "VPN istemcisini hazırlayın ve ağ ayarlarını uygulayın.",
+                    4 => "Uygula her şeyi tek tıkla güvenle hazırlar.",
+                    _ => "Profilini paylaşın ve arkadaşınla oynamaya başlayın.",
+                };
+            }
             if (_btnWizBack != null) _btnWizBack.IsVisible = _wizardStep > 1;
             if (_btnWizNext != null) _btnWizNext.IsVisible = _wizardStep < 5;
             if (_btnWizFinish != null) _btnWizFinish.IsVisible = _wizardStep == 5;
@@ -818,11 +1056,11 @@ namespace BlueLobby
             switch (_wizardStep)
             {
                 case 1:
-                    _wizardBody.Children.Add(Ui.Muted("Oynamak istediğin oyunun kurulu olduğu klasörü seç. Steam'de genelde:"));
+                    _wizardBody.Children.Add(Ui.Muted("Oynamak istediğin oyunun kurulu olduğu klasörü seçin. Steam'de varsayılan yol genellikle:"));
                     _wizardBody.Children.Add(Ui.Muted(OperatingSystem.IsWindows()
                         ? @"C:\Program Files (x86)\Steam\steamapps\common\<OyunAdı>"
                         : "~/.local/share/Steam/steamapps/common/<OyunAdı>"));
-                    var btnPick = Ui.Btn("📁 Oyun Klasörünü Seç", Ui.BtnKind.Primary);
+                    var btnPick = Ui.BtnIcon("Oyun Klasörünü Seç", "folder", Ui.BtnKind.Primary);
                     btnPick.Click += BtnBrowse_Click;
                     _wizardBody.Children.Add(btnPick);
 
@@ -832,10 +1070,10 @@ namespace BlueLobby
                             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                         if (heroic.Count > 0)
                         {
-                            _wizardBody.Children.Add(Ui.Muted("Heroic ile kurulu oyunların (tıkla ve seç):"));
+                            _wizardBody.Children.Add(Ui.Muted("Heroic ile kurulu oyunlar (tıkla ve seç):"));
                             foreach (HeroicGame g in heroic)
                             {
-                                var gbtn = Ui.Btn($"🎮 {g.Title}", Ui.BtnKind.Secondary);
+                                var gbtn = Ui.Btn(g.Title, Ui.BtnKind.Secondary);
                                 string path = g.InstallPath;
                                 gbtn.Click += async (_, _) => await SelectGameFolderAsync(path);
                                 _wizardBody.Children.Add(gbtn);
@@ -845,48 +1083,56 @@ namespace BlueLobby
 
                     _wizardBody.Children.Add(Ui.Muted(string.IsNullOrWhiteSpace(_gameDir)
                         ? "Henüz klasör seçilmedi — seçince İleri açılır."
-                        : $"✅ Seçildi: {_gameDir}"));
+                        : $"Seçildi: {_gameDir}"));
                     break;
                 case 2:
-                    _wizardBody.Children.Add(Ui.Muted("Oyunun Steam kütüphanesini taklit edecek bileşen dosyası lazım (senin sorumluluğunda temin edilir — program dağıtmaz)."));
+                    _wizardBody.Children.Add(Ui.Muted("Oyunun Steam kütüphanesini taklit edecek bileşen dosyası gerekiyor (senin sorumluluğunda temin edilir — program dağıtmaz)."));
                     _wizardBody.Children.Add(Ui.Muted("Dosyalar bilgisayarındaysa (İndirilenler, Masaüstü, Belgeler) aşağıdaki buton bulup kopyalar:"));
-                    var btnFind = Ui.Btn("🔍 Yerel Bileşenleri Ara ve Kopyala", Ui.BtnKind.Secondary);
+                    var btnFind = Ui.BtnIcon("Yerel Bileşenleri Ara ve Kopyala", "search", Ui.BtnKind.Secondary);
                     btnFind.Click += BtnFindEmu_Click;
                     _wizardBody.Children.Add(btnFind);
                     break;
                 case 3:
-                    _wizardBody.Children.Add(Ui.Muted("Arkadaşınla aynı ağda olman gerek. VPN istemcisi kurulu değilse önce indir:"));
-                    var btnVpn = Ui.Btn("⬇ VPN İstemcisini İndir", Ui.BtnKind.Secondary);
+                    _wizardBody.Children.Add(Ui.Muted("Arkadaşınla aynı ağda olman gerekiyor. VPN istemcisi kurulu değilse önce indirin:"));
+                    var btnVpn = Ui.BtnIcon("VPN İstemcisini İndir", "download", Ui.BtnKind.Secondary);
                     btnVpn.Click += BtnVpnDownload_Click;
                     _wizardBody.Children.Add(btnVpn);
-                    var btnAuto = Ui.Btn("⚡ Standart LAN Ayarlarını Uygula", Ui.BtnKind.Secondary);
+                    var btnAuto = Ui.BtnIcon("Standart LAN Ayarlarını Uygula", "zap", Ui.BtnKind.Secondary);
                     btnAuto.Click += BtnAutoSetup_Click;
                     _wizardBody.Children.Add(btnAuto);
                     _wizardBody.Children.Add(Ui.Muted("İleri'ye bas — uygulama adımında görüşürüz."));
                     break;
                 case 4:
-                    _wizardBody.Children.Add(Ui.Muted("Ana ekrana döndüğünde ⚡ Uygula'ya bas. Program seni koruyor:"));
-                    _wizardBody.Children.Add(Ui.Muted("• Yanlış klasör seçersen durur ve sorar"));
-                    _wizardBody.Children.Add(Ui.Muted("• Oyun açıksa yamayı engeller"));
-                    _wizardBody.Children.Add(Ui.Muted("• Her dosyanın yedeğini alır — bir sorun olursa kendini geri alır"));
-                    _wizardBody.Children.Add(Ui.Muted("Uyguladıktan sonra renkli çiplere bak:"));
-                    _wizardBody.Children.Add(Ui.Muted("🟢 Uyumluluk = oyun LAN'da çalışıyor · 🟢 Bileşen = hazır · 🟢 hedef = kaç dosya değişti"));
-                    _wizardBody.Children.Add(Ui.Muted("🟠 'Yama sıfırlanmış' görürsen (Steam güncellediyse) Uygula'ya tekrar bas."));
-                    var btnGo = Ui.Btn("🎮 Oyun paneline git", Ui.BtnKind.Primary);
+                    _wizardBody.Children.Add(Ui.Muted("Ana ekrana döndüğünde Uygula'ya bas. Program seni koruyor:"));
+                    _wizardBody.Children.Add(Ui.Muted("– Yanlış klasör seçersen durur ve sorar"));
+                    _wizardBody.Children.Add(Ui.Muted("– Oyun açıksa yamayı engeller"));
+                    _wizardBody.Children.Add(Ui.Muted("– Her dosyanın yedeğini alır — bir sorun olursa kendini geri alır"));
+                    _wizardBody.Children.Add(Ui.Muted("Uyguladıktan sonra durum şeritindeki renklere bak:"));
+                    _wizardBody.Children.Add(Ui.Muted("Yeşil = oyun LAN'da çalışıyor · Bileşen hazır · hedef = kaç dosya değişti"));
+                    _wizardBody.Children.Add(Ui.Muted("Turuncu 'yama sıfırlanmış' görürsen (Steam güncellediyse) Uygula'ya tekrar bas."));
+                    var btnGo = Ui.BtnIcon("Oyun paneline git", "game", Ui.BtnKind.Primary);
                     btnGo.Click += (_, _) => SetSection("game");
                     _wizardBody.Children.Add(btnGo);
                     break;
                 case 5:
-                    _wizardBody.Children.Add(Ui.Muted("Şimdi arkadaşınla aynı ayarlarda buluş:"));
-                    var btnShare = Ui.Btn("🔗 Profili Paylaş — kodu arkadaşına gönder", Ui.BtnKind.Secondary);
+                    _wizardBody.Children.Add(Ui.Muted("Son adım: arkadaşınla aynı ayarlarda buluş."));
+                    var btnShare = Ui.BtnIcon("Profili Paylaş — kodu arkadaşına gönder", "users", Ui.BtnKind.Secondary);
                     btnShare.Click += BtnShareProfile_Click;
                     _wizardBody.Children.Add(btnShare);
                     _wizardBody.Children.Add(Ui.Muted("Arkadaşın 'Profil Al' ile kodu yapıştırır, aynı ayarlarla Uygular."));
-                    _wizardBody.Children.Add(Ui.Muted("VPN çipiniz ikisinizde de 🟢 yeşilse, oyunda lobiden veya IP ile buluşun."));
-                    _wizardBody.Children.Add(Ui.Muted("Oynamayı bitirince 🔄 Geri Yükle ile oyununu eski haline döndür — ne yapılacağını önce gösterir."));
-                    _wizardBody.Children.Add(Ui.Muted("Takıldığında sol menüden 🎓 Mavi'nin Okulu'na bak."));
+                    _wizardBody.Children.Add(Ui.Muted("VPN çipiniz ikisi de yeşilse, oyunda lobiden veya IP ile buluşun."));
+                    _wizardBody.Children.Add(Ui.Muted("Oynamayı bitirince Geri Yükle ile oyununu eski haline döndür — ne yapılacağını önce gösterir."));
+                    _wizardBody.Children.Add(Ui.Muted("Takıldığında sol menüden Mavi'nin Okulu'na bak."));
                     break;
             }
+        }
+
+        private void WizFinish()
+        {
+            _settings.WizardDone = true;
+            App.Store.SaveSettings(_settings);
+            SetSection("game");
+            Log("Sihirbaz tamamlandı. Şimdi 'Uygula' ile oyununu hazırlayabilirsin.");
         }
 
         // ===================== Mavi'nin Okulu =====================
@@ -895,17 +1141,30 @@ namespace BlueLobby
         {
             return new Border
             {
-                Background = Ui.Brush(Ui.C.Card),
-                CornerRadius = new Avalonia.CornerRadius(8),
-                Padding = new Avalonia.Thickness(10, 8),
-                Margin = new Avalonia.Thickness(0, 6, 0, 0),
-                Child = new TextBlock
+                Background = Ui.Brush(Ui.C.Surface),
+                BorderBrush = Ui.Brush(Ui.C.BorderSubtle),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(12, 9),
+                Margin = new Thickness(0, 6, 0, 0),
+                Child = new StackPanel
                 {
-                    Text = $"🤖 Mavi der ki: {text}",
-                    Foreground = Ui.Brush(Ui.C.Accent),
-                    TextWrapping = TextWrapping.Wrap,
-                    FontStyle = FontStyle.Italic,
-                }
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 9,
+                    Children =
+                    {
+                        Ui.Owl(15, Ui.Brush(Ui.C.Accent)),
+                        new TextBlock
+                        {
+                            Text = $"Mavi: {text}",
+                            Foreground = Ui.Brush(Ui.C.Muted),
+                            FontSize = 12,
+                            FontStyle = FontStyle.Italic,
+                            TextWrapping = TextWrapping.Wrap,
+                            VerticalAlignment = VerticalAlignment.Center,
+                        },
+                    },
+                },
             };
         }
 
@@ -921,83 +1180,72 @@ namespace BlueLobby
 
         private Control BuildLearnSection()
         {
-            var panel = new StackPanel();
+            var panel = new StackPanel { Spacing = 0 };
 
-            panel.Children.Add(LearnCard("👋 Bu uygulama ne yapar?",
-                Ui.Muted("BlueLobby, sahip olduğun oyunları arkadaşlarınla yerel ağ (LAN) veya VPN üzerinden oynayabilmen için hazırlar:"),
-                Ui.Muted("• Oyunun ağ ayarlarını yapar ve dosyalarını güvenle yedekler"),
-                Ui.Muted("• Arkadaşlarınla aynı ağda buluşmanı sağlar"),
-                Ui.Muted("• İstediğinde her şeyi tek tıkla eski haline getirir"),
-                MaviQuote("Ben Mavi! Bu ekranda senin rehberinim. Takıldığın her yerde yanındayım. 🤖")));
+            panel.Children.Add(BuildCardHeader(Loc.T("nav_learn"), Loc.T("page_learn_subtitle"), "learn"));
 
-            var btnWiz = Ui.Btn("🧙 Kurulum sihirbazını başlat", Ui.BtnKind.Primary);
+            var btnWiz = Ui.BtnIcon("Kurulum sihirbazını başlat", "zap", Ui.BtnKind.Primary);
             btnWiz.Click += (_, _) =>
             {
                 _wizardStep = 1;
                 SetSection("wizard");
                 RenderWizardStep();
             };
-            panel.Children.Add(LearnCard("🧙 İlk kurulum (5 dakika)",
-                Ui.Muted("1. Oyun klasörünü seç → 2. Bileşen dosyanı bul → 3. VPN'i hazırla → 4. Uygula → 5. Arkadaşınla oyna."),
+
+            panel.Children.Add(LearnCard("BlueLobby nedir?",
+                Ui.Muted("– Sahip olduğun oyunları LAN veya VPN üzerinden arkadaşlarınla oynatır."),
+                Ui.Muted("– Oyunun ağ ayarlarını hazırlar, değiştirdiği her dosyayı güvenle yedekler."),
+                Ui.Muted("– İstersen her şeyi tek tıkla eski haline döndürür."),
+                MaviQuote("Hazırlığın her adımında yanındayım; takıldığın yerde buradayım."),
+                new Border { Height = 4, Background = Brushes.Transparent },
                 btnWiz));
 
-            panel.Children.Add(LearnCard("🗺️ Ekranın yerleri",
-                Ui.Muted("🎮 Oyun — klasör seçme, ayarlar, Uygula/Geri Yükle/Başlat butonları burada."),
-                Ui.Muted("🎓 Mavi'nin Okulu — burası! Yardım ve rehber."),
-                Ui.Muted("👥 Arkadaşlar — isim + IP kaydet; çift tıkla IP'yi forma doldurur."),
-                Ui.Muted("⚙️ Ayarlar — tema, dil, maskot, dokunmatik mod, tam ekran."),
-                Ui.Muted("📋 Log — yapılan her işlemin kaydı; sorun olursa buradan bakılır.")));
+            panel.Children.Add(LearnCard("Ekran yerleşimi",
+                Ui.Muted("– Oyun: klasör seçimi, ayarlar ve Uygulama / Geri Yükle / Başlat butonları."),
+                Ui.Muted("– Arkadaşlar: isim ve IP kaydet; çift tıkla IP'yi forma doldurur."),
+                Ui.Muted("– Ayarlar: tema, dil, maskot, dokunmatik mod, tam ekran."),
+                Ui.Muted("– Log: yapılan her işlemin kaydı; sorun olursa buradan bakılır.")));
 
-            panel.Children.Add(LearnCard("🚦 Renkli çipler ne anlatıyor?",
-                Ui.Muted("VPN: 🟢 bağlı · 🔴 bağlı değil"),
-                Ui.Muted("Ping: 🟢 iyi (<60ms) · 🟡 orta · 🔴 kötü/erişilemiyor"),
-                Ui.Muted("Bileşen: 🟢 hazır · 🟡 eksik — 'Yerel Bileşenleri Ara'ya bas"),
-                Ui.Muted("Uyumluluk: 🟢 çalışır · 🟡 ek adım gerekir · 🔴 çalışmaz · ⚪ bilinmiyor"),
-                Ui.Muted("Hedef: 🟢 kaç dosya hazır · 🟠 yama sıfırlanmış (tekrar Uygula)"),
-                MaviQuote("Çiplere her bakışında her şeyin yolunda olup olmadığını 2 saniyede görürsün.")));
+            panel.Children.Add(LearnCard("Durum göstergeleri",
+                Ui.Muted("– Yeşil: her şey yolunda / hazır."),
+                Ui.Muted("– Sarı: eksik var — küçük bir aksiyon gerekli."),
+                Ui.Muted("– Kırmızı: bağlantı veya sistem sorunu."),
+                Ui.Muted("– Hedef rozeti: kaç dosyanın hazırlandığını gösterir."),
+                MaviQuote("Durum şeridine tek bakışta her şeyin yolunda olup olmadığını görebilirsin.")));
 
-            panel.Children.Add(LearnCard("🔧 Sorun mu var? İlk bakılacaklar",
-                Ui.Muted("VPN kırmızı → VPN istemcisi açık mı? 'Standart LAN Ayarları'na bas."),
-                Ui.Muted("Bileşen sarı → dosyalar İndirilenler'de mi? Ara butonuyla kopyala."),
-                MutedFix(),
-                Ui.Muted("Oyuna katılamıyorsun → arkadaşın IP'sini ping ile test et; 🟢 olmalı."),
-                Ui.Muted("'Bu yöntemle çalışmaz' → oyun sunucu tabanlı; başka oyun dene."),
-                Ui.Muted("Hiçbir şey çözülmezse Ayarlar → sorun giderme: Log'u dışa aktarıp paylaş.")));
+            panel.Children.Add(LearnCard("Veri güvenliği",
+                Ui.Muted("– Değiştirilen her dosyanın .bak yedeği alınır."),
+                Ui.Muted("– Bir hata olursa yarım işlem kalmaz — otomatik geri alma devreye girer."),
+                Ui.Muted("– Geri yüklemeden önce yedekler kontrol edilir, bozuksa durulur."),
+                Ui.Muted("– Yanlış klasör seçilirse sorulur, emin olmadan devam edilmez."),
+                MaviQuote("En kötü senaryoda bile oyununu ilk günkü hâline döndürebilirsin.")));
 
-            panel.Children.Add(LearnCard("🛡️ Güvenlik: verilerin emin ellerde",
-                Ui.Muted("• Değiştirilen her dosyanın .bak yedeği alınır"),
-                Ui.Muted("• Bir hata olursa yarım işlem kalmaz — otomatik geri alma devreye girer"),
-                Ui.Muted("• Geri yüklemeden önce yedekler kontrol edilir, bozuksa durulur"),
-                Ui.Muted("• Yanlış klasör seçilirse sorulur, emin olmadan devam edilmez"),
-                MaviQuote("En kötü senaryoda bile oyununu ilk günkü hâline getirebilirsin. Söz veriyorum.")));
+            panel.Children.Add(LearnCard("Sorun giderme",
+                Ui.Muted("– VPN kırmızı: VPN istemcisi açık mı? 'Standart LAN Ayarları'na bas."),
+                Ui.Muted("– Bileşen sarı: dosyalar İndirilenler'de mi? Ara butonuyla kopyala."),
+                Ui.Muted("– Ping yok: arkadaşın IP'si doğru mu? (100.x Tailscale / 26.x Radmin)"),
+                Ui.Muted("– Oyuna katılamıyorsun: arkadaşının IP'sini ping ile test et; yeşil olmalı."),
+                Ui.Muted("– 'Bu yöntemle çalışmaz': oyun sunucu tabanlı; başka oyun dene."),
+                Ui.Muted("– Hiçbir şey çözülmezse: Log'u dışa aktarıp paylaş.")));
 
-            panel.Children.Add(LearnCard("💡 Mavi'nin ipuçları",
-                Ui.Muted("• Klasörü seçmek için pencereye sürükle-bırak da yapabilirsin"),
-                Ui.Muted("• Arkadaş listesinde çift tık = IP otomatik forma gelir"),
-                Ui.Muted("• 'Standart LAN Ayarları' tek tıkla çoğu ayarı senin yerine yapar"),
-                Ui.Muted("• F11 = tam ekran"),
-                Ui.Muted("• Her oyunun ayarını ayrı ayrı hatırlar — bir kez yaz, unut"),
-                Ui.Muted("• 🔄 Geri Yükle her zaman güvenli: önce ne yapılacağını gösterir")));
+            panel.Children.Add(LearnCard("Kısayollar ve pratik bilgiler",
+                Ui.Muted("– Klasörü seçmek için pencereye sürükle-bırak da yapabilirsin."),
+                Ui.Muted("– Arkadaş listesinde çift tık = IP otomatik forma gelir."),
+                Ui.Muted("– 'Standart LAN Ayarları' tek tıkla çoğu ayarı senin yerine yapar."),
+                Ui.Muted("– F11 = tam ekran."),
+                Ui.Muted("– Her oyunun ayarını ayrı ayrı hatırlar — bir kez yaz, unut."),
+                Ui.Muted("– Geri Yükle her zaman güvenli: önce ne yapılacağını gösterir.")));
 
             return panel;
         }
 
-        private static Control MutedFix() =>
-            Ui.Muted("Ping yok → arkadaşın IP'si doğru mu? (100.x Tailscale / 26.x Radmin)");
-
-        private void WizFinish()
-        {
-            _settings.WizardDone = true;
-            App.Store.SaveSettings(_settings);
-            SetSection("game");
-            Log("🧙 Sihirbaz tamamlandı. Şimdi '⚡ Uygula' ile oyununu hazırlayabilirsin.");
-        }
+        // ===================== Bölüm / tema / maskot =====================
 
         private void ApplyResponsiveLayout()
         {
             if (_mainColumns == null || _sidebarBorder == null || _compactNav == null) return;
             bool compact = Bounds.Width > 0 && Bounds.Width < 920;
-            _mainColumns[0].Width = compact ? new GridLength(0) : new GridLength(244);
+            _mainColumns[0].Width = compact ? new GridLength(0) : new GridLength(240);
             _sidebarBorder.IsVisible = !compact;
             _compactNav.IsVisible = compact;
         }
@@ -1005,12 +1253,7 @@ namespace BlueLobby
         private void UpdateCompactNavSelection(string section)
         {
             foreach (Button btn in _compactNavButtons)
-            {
-                bool selected = Equals(btn.Tag as string, section);
-                btn.Background = selected ? Ui.Brush(Ui.C.SurfaceStrong) : Brushes.Transparent;
-                btn.Foreground = selected ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
-                btn.BorderBrush = selected ? Ui.Brush(Ui.C.Accent) : Brushes.Transparent;
-            }
+                StyleNavButtonState(btn, Equals(btn.Tag as string, section));
         }
 
         private void SetSection(string section)
@@ -1037,12 +1280,7 @@ namespace BlueLobby
             if (_pageSubtitle != null) _pageSubtitle.Text = subtitle;
 
             foreach (Button btn in _navButtons)
-            {
-                bool selected = Equals(btn.Tag as string, section);
-                btn.Background = selected ? Ui.Brush(Ui.C.SurfaceStrong) : Brushes.Transparent;
-                btn.Foreground = selected ? Ui.Brush(Ui.C.Text) : Ui.Brush(Ui.C.Muted);
-                btn.BorderBrush = selected ? Ui.Brush(Ui.C.Accent) : Brushes.Transparent;
-            }
+                StyleNavButtonState(btn, Equals(btn.Tag as string, section));
             UpdateCompactNavSelection(section);
         }
 
@@ -1074,7 +1312,7 @@ namespace BlueLobby
             if (_statusBarText != null) _statusBarText.Foreground = Ui.Brush(c.Muted);
             if (_pageTitle != null) _pageTitle.Foreground = Ui.Brush(c.Text);
             if (_pageSubtitle != null) _pageSubtitle.Foreground = Ui.Brush(c.Muted);
-            if (_pageEyebrow != null) _pageEyebrow.Foreground = Ui.Brush(c.Accent);
+            if (_pageEyebrow != null) _pageEyebrow.Foreground = Ui.Brush(c.Muted);
             if (_sidebarTargetText != null) _sidebarTargetText.Foreground = Ui.Brush(c.Text);
             if (_logBox != null)
             {
@@ -1082,16 +1320,9 @@ namespace BlueLobby
                 _logBox.Foreground = Ui.Brush(c.Log);
             }
             foreach (TextBlock block in _mutedBlocks) block.Foreground = Ui.Brush(c.Muted);
-            foreach (Button btn in _allButtons)
-            {
-                bool selected = Equals(btn.Tag as string, _section);
-                if (_navButtons.Contains(btn))
-                {
-                    btn.Background = selected ? Ui.Brush(c.SurfaceStrong) : Brushes.Transparent;
-                    btn.Foreground = selected ? Ui.Brush(c.Text) : Ui.Brush(c.Muted);
-                    btn.BorderBrush = selected ? Ui.Brush(c.Border) : Brushes.Transparent;
-                }
-            }
+            foreach (Button btn in _navButtons)
+                StyleNavButtonState(btn, Equals(btn.Tag as string, _section));
+            UpdateCompactNavSelection(_section);
             SetSection(_section);
         }
 

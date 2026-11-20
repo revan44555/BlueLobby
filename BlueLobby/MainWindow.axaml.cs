@@ -81,7 +81,7 @@ namespace BlueLobby
             {
                 SetSection("wizard");
                 RenderWizardStep();
-                Log("🧙 İlk kurulum için sihirbaz açıldı — 3 adımda hazır olursun.");
+                Log("İlk kurulum için sihirbaz açıldı — 3 adımda hazır olursun.");
             }
         }
 
@@ -132,12 +132,12 @@ namespace BlueLobby
                 if (top?.Clipboard != null)
                 {
                     await top.Clipboard.SetTextAsync(text);
-                    Log("📋 Panoya kopyalandı.");
+                    Log("Panoya kopyalandı.");
                 }
             }
             catch (Exception ex)
             {
-                Log($"⚠️ Kopyalanamadı: {ex.Message}");
+                Log($"Kopyalanamadı: {ex.Message}");
             }
         }
 
@@ -148,11 +148,11 @@ namespace BlueLobby
                 string dir = Path.GetDirectoryName(App.Store.LogPath)!;
                 string target = Path.Combine(dir, $"bluelobby-export-{DateTime.Now:yyyyMMdd-HHmmss}.log");
                 File.WriteAllText(target, _logBuffer);
-                Log($"💾 Log dışa aktarıldı: {target}");
+                Log($"Log dışa aktarıldı: {target}");
             }
             catch (Exception ex)
             {
-                Log($"⚠️ Dışa aktarma başarısız: {ex.Message}");
+                Log($"Dışa aktarma başarısız: {ex.Message}");
             }
         }
 
@@ -248,22 +248,22 @@ namespace BlueLobby
                     ManifestReadResult mfRead = App.Store.ReadManifest(gameDir);
                     if (!mfRead.Valid)
                     {
-                        patchText = "🔴 Manifest bozuk";
+                        patchText = "Manifest bozuk";
                         patchBrush = Ui.Err;
                     }
                     else if (mfRead.Manifest != null && mfRead.Manifest.State != PatchTransactionState.Committed)
                     {
-                        patchText = "🟠 Yarım işlem recovery bekliyor";
+                        patchText = "Yarım işlem recovery bekliyor";
                         patchBrush = Ui.Mid;
                     }
                     else if (mfRead.Manifest != null && BackupValidator.IsPatchStale(mfRead.Manifest))
                     {
-                        patchText = "🟠 Dosya değişmiş — tekrar değerlendir";
+                        patchText = "Dosya değişmiş — tekrar değerlendir";
                         patchBrush = Ui.Mid;
                     }
                     else
                     {
-                        patchText = count > 0 ? $"🟢 {count} hedef hazır" : "🟡 Hedef bulunamadı";
+                        patchText = count > 0 ? $"{count} hedef hazır" : "Hedef bulunamadı";
                         patchBrush = count > 0 ? Ui.Ok : Ui.Mid;
                     }
                 }
@@ -287,7 +287,7 @@ namespace BlueLobby
                     {
                         SetChip(_chipCompat, "Uyumluluk: --", Ui.Brush(Ui.C.Muted));
                     }
-                    string vpnStatusText = vpnActive ? $"🟢 VPN: {(vpnIp ?? Loc.T("radmin_check"))}" : "🔴 VPN: Bulunamadı / Kapalı";
+                    string vpnStatusText = vpnActive ? $"VPN: {(vpnIp ?? Loc.T("radmin_check"))}" : "VPN: Bulunamadı / Kapalı";
                     SetChip(_chipVpn, vpnStatusText, vpnActive ? Ui.Ok : Ui.Err);
                     SetChip(_sidebarVpnChip, vpnStatusText, vpnActive ? Ui.Ok : Ui.Err);
                     SetChip(_chipPing, pingText, pingBrush);
@@ -301,7 +301,7 @@ namespace BlueLobby
             }
             catch (Exception ex)
             {
-                Log($"⚠️ Durum yenilenemedi: {ex.Message}");
+                Log($"Durum yenilenemedi: {ex.Message}");
             }
         }
 
@@ -353,7 +353,7 @@ namespace BlueLobby
                 bool vpnActive = await App.Services.IsVpnActiveAsync();
                 if (!vpnActive)
                 {
-                    Log($"🟡 VPN ağı algılanamadı. '{Loc.T("autoscan")}' ile standart LAN ayarlarını uygulayabilir veya '{Loc.T("dl_radmin")}' ile istemciyi kurabilirsiniz.");
+                    Log($"VPN ağı algılanamadı. '{Loc.T("autoscan")}' ile standart LAN ayarlarını uygulayabilir veya '{Loc.T("dl_radmin")}' ile istemciyi kurabilirsiniz.");
                 }
             }
             catch
@@ -420,7 +420,7 @@ namespace BlueLobby
             {
                 _txtAppId.Text = item.Game.AppId.Value.ToString();
             }
-            Log($"🎮 {item.Game.Name} seçildi ({item.Game.Source}).");
+            Log($"{item.Game.Name} seçildi ({item.Game.Source}).");
         }
 
         private sealed class DiscoveredGameListItem
@@ -454,7 +454,7 @@ namespace BlueLobby
             string root = PathSafety.Canonicalize(dir);
             if (!Directory.Exists(root))
             {
-                Log("❌ Oyun klasörü bulunamadı.");
+                Log("Oyun klasörü bulunamadı.");
                 return;
             }
 
@@ -497,47 +497,47 @@ namespace BlueLobby
             ManifestReadResult manifestRead = App.Store.ReadManifest(root);
             if (manifestRead.Exists && manifestRead.Valid && manifestRead.Manifest != null && manifestRead.Manifest.State != PatchTransactionState.Committed)
             {
-                Log("🛟 Yarım kalmış dosya işlemi bulundu; güvenli recovery başlatılıyor.");
+                Log("Yarım kalmış dosya işlemi bulundu; güvenli recovery başlatılıyor.");
                 try
                 {
                     await App.Engine.RecoverInterruptedTransactionAsync(root);
-                    Log("✅ Recovery tamamlandı.");
+                    Log("Recovery tamamlandı.");
                 }
                 catch (Exception ex)
                 {
-                    Log($"❌ Recovery tamamlanamadı: {ErrorDoctor.Explain(ex)}");
+                    Log($"Recovery tamamlanamadı: {ErrorDoctor.Explain(ex)}");
                 }
             }
             else if (manifestRead.Exists && !manifestRead.Valid)
             {
-                Log($"🔴 Manifest bozuk: {manifestRead.Error}");
+                Log($"Manifest bozuk: {manifestRead.Error}");
             }
 
             var targets = await Task.Run(() => GameScanner.FindApiDllTargets(root, _exePath));
             Log(targets.Count > 0
-                ? $"🟢 Klasör seçildi: çalıştırıcı yanında {targets.Count} API hedefi bulundu."
-                : "🟡 Klasör seçildi ama seçilen çalıştırıcı yanında API hedefi bulunamadı.");
+                ? $"Klasör seçildi: çalıştırıcı yanında {targets.Count} API hedefi bulundu."
+                : "Klasör seçildi ama seçilen çalıştırıcı yanında API hedefi bulunamadı.");
 
             if (OperatingSystem.IsLinux() && targets.Count > 0)
             {
                 var protons = GameLibrary.FindProtonVersions(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                 Log(protons.Count > 0
-                    ? $"🐧 Proton sürümleri: {string.Join(", ", protons)}"
-                    : "🐧 Proton bulunamadı — oyun native değilse Steam'den Proton kur.");
+                    ? $"Proton sürümleri: {string.Join(", ", protons)}"
+                    : "Proton bulunamadı — oyun native değilse Steam'den Proton kur.");
             }
 
             GameProfile? savedProfile = App.Profiles.Load(root);
             if (savedProfile != null)
             {
                 ApplyProfileToUi(savedProfile);
-                Log($"📌 '{Path.GetFileName(root)}' ayarları profilden yüklendi (oyuncu: {savedProfile.PlayerName}, AppID: {savedProfile.AppId}).");
+                Log($"'{Path.GetFileName(root)}' ayarları profilden yüklendi (oyuncu: {savedProfile.PlayerName}, AppID: {savedProfile.AppId}).");
             }
 
             if (TryResolveAppId(out int wizAppId))
             {
                 CompatResult cr = App.Compat.Lookup(wizAppId);
                 if (cr.Status != CompatStatus.Unknown)
-                    Log($"🎮 {cr.Display}{(string.IsNullOrWhiteSpace(cr.Note) ? "" : $" — {cr.Note}")}");
+                    Log($"{cr.Display}{(string.IsNullOrWhiteSpace(cr.Note) ? "" : $" — {cr.Note}")}");
             }
 
             _wizardHasFolder = true;
@@ -598,7 +598,7 @@ namespace BlueLobby
             {
                 if (kv.Value.Count != 1)
                 {
-                    Log($"🟡 {kv.Key}: {kv.Value.Count} farklı kopya bulundu; yanlış binary seçmemek için otomatik kopyalanmadı.");
+                    Log($"{kv.Key}: {kv.Value.Count} farklı kopya bulundu; yanlış binary seçmemek için otomatik kopyalanmadı.");
                     foreach (string candidate in kv.Value.Take(8)) Log($"   • {candidate}");
                     continue;
                 }
@@ -609,16 +609,16 @@ namespace BlueLobby
                     string destination = Path.Combine(baseDir, kv.Key);
                     FileIntegrity.CopyDurably(source, destination);
                     copied++;
-                    Log($"✅ Bileşen kopyalandı: {kv.Key} ← {source}");
+                    Log($"Bileşen kopyalandı: {kv.Key} ← {source}");
                 }
                 catch (Exception ex)
                 {
-                    Log($"❌ Bileşen kopyalanamadı ({kv.Key}): {ex.Message}");
+                    Log($"Bileşen kopyalanamadı ({kv.Key}): {ex.Message}");
                 }
             }
 
             if (copied == 0)
-                Log("🟡 Uygun bileşen bulunamadı (Downloads/Desktop/Documents). Dosyayı güvenilir yasal kaynağından elle getirip uygulama klasörüne koyabilirsiniz.");
+                Log("Uygun bileşen bulunamadı (Downloads/Desktop/Documents). Dosyayı güvenilir yasal kaynağından elle getirip uygulama klasörüne koyabilirsiniz.");
 
             await UpdateSystemStatusAsync();
         }
@@ -633,11 +633,11 @@ namespace BlueLobby
             if (!string.IsNullOrWhiteSpace(vpnIp) && _txtFriendIp != null)
             {
                 _txtFriendIp.Text = vpnIp;
-                Log($"✅ VPN IPv4 algılandı: {vpnIp}");
+                Log($"VPN IPv4 algılandı: {vpnIp}");
             }
             else
             {
-                Log("⚠️ VPN IPv4 algılanamadı. VPN ağını kontrol edin.");
+                Log("VPN IPv4 algılanamadı. VPN ağını kontrol edin.");
             }
 
             SaveUiToSettings();
@@ -667,7 +667,7 @@ namespace BlueLobby
             string ip = _txtFriendIpNew?.Text?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(ip))
             {
-                Log("❌ Arkadaş eklemek için isim ve IP gerekli.");
+                Log("Arkadaş eklemek için isim ve IP gerekli.");
                 return;
             }
 
@@ -677,7 +677,7 @@ namespace BlueLobby
             RefreshFriendList();
             if (_txtFriendName != null) _txtFriendName.Text = string.Empty;
             if (_txtFriendIpNew != null) _txtFriendIpNew.Text = string.Empty;
-            Log($"👥 Arkadaş eklendi: {name}");
+            Log($"Arkadaş eklendi: {name}");
         }
 
         private async void BtnRemoveFriend_Click(object? sender, RoutedEventArgs e)
@@ -694,7 +694,7 @@ namespace BlueLobby
             _settings.Friends.RemoveAll(f => ReferenceEquals(f, selected) || string.Equals(f.Name, selected.Name, StringComparison.OrdinalIgnoreCase));
             App.Store.SaveSettings(_settings);
             RefreshFriendList();
-            Log($"👥 Arkadaş silindi: {selected.Name}");
+            Log($"Arkadaş silindi: {selected.Name}");
         }
 
         private void LstFriends_DoubleTapped(object? sender, TappedEventArgs e)
@@ -703,7 +703,7 @@ namespace BlueLobby
 
             _txtFriendIp.Text = selected.Ip;
             SetSection("game");
-            Log($"👥 {Loc.T("friend_used")}: {selected.Ip}");
+            Log($"{Loc.T("friend_used")}: {selected.Ip}");
         }
 
         // ===================== Ayar değişiklikleri =====================
@@ -754,7 +754,7 @@ namespace BlueLobby
             {
                 if (string.IsNullOrWhiteSpace(_gameDir) || !Directory.Exists(_gameDir))
                 {
-                    Log("❌ Önce geçerli bir oyun klasörü seçin.");
+                    Log("Önce geçerli bir oyun klasörü seçin.");
                     return;
                 }
 
@@ -779,20 +779,20 @@ namespace BlueLobby
 
                 if (!int.TryParse(_txtAppId?.Text?.Trim(), out int appId) || appId <= 0)
                 {
-                    Log("❌ AppID pozitif sayı olmalıdır.");
+                    Log("AppID pozitif sayı olmalıdır.");
                     return;
                 }
 
                 if (!string.IsNullOrWhiteSpace(_exePath) && await App.Services.IsGameRunningAsync(_exePath))
                 {
-                    Log("❌ Seçilen oyun şu an çalışıyor gibi görünüyor. Önce oyundan tamamen çıkın.");
+                    Log("Seçilen oyun şu an çalışıyor gibi görünüyor. Önce oyundan tamamen çıkın.");
                     return;
                 }
 
                 var targets = await Task.Run(() => GameScanner.FindApiDllTargets(_gameDir, _exePath));
                 if (targets.Count == 0)
                 {
-                    Log("❌ Hedef API dosyası bulunamadı.");
+                    Log("Hedef API dosyası bulunamadı.");
                     return;
                 }
 
@@ -802,7 +802,7 @@ namespace BlueLobby
                     byte[]? bytes = PatchEngine.LoadComponentBytes(AppDomain.CurrentDomain.BaseDirectory, t);
                     if (bytes == null || bytes.Length == 0)
                     {
-                        Log($"❌ {(t.Is64Bit ? "64-bit" : "32-bit")} bileşen dosyası ({GameScanner.GetComponentFileName(t)}) bulunamadı. Hiçbir dosya değiştirilmedi.");
+                        Log($"{(t.Is64Bit ? "64-bit" : "32-bit")} bileşen dosyası ({GameScanner.GetComponentFileName(t)}) bulunamadı. Hiçbir dosya değiştirilmedi.");
                         return;
                     }
                     buffers.Add((t, bytes));
@@ -827,7 +827,7 @@ namespace BlueLobby
                     progress,
                     _operationCts.Token);
 
-                Log($"🎉 İşlem tamamlandı. Hedef sayısı: {manifest.Entries.Count}. Geri almak için 'Geri Yükle' kullanın.");
+                Log($"İşlem tamamlandı. Hedef sayısı: {manifest.Entries.Count}. Geri almak için 'Geri Yükle' kullanın.");
             }
             catch (OperationCanceledException)
             {
@@ -853,19 +853,19 @@ namespace BlueLobby
             {
                 if (string.IsNullOrWhiteSpace(_gameDir))
                 {
-                    Log("❌ Önce oyun klasörü seçin.");
+                    Log("Önce oyun klasörü seçin.");
                     return;
                 }
 
                 ManifestReadResult manifestRead = App.Store.ReadManifest(_gameDir);
                 if (!manifestRead.Exists)
                 {
-                    Log("ℹ️ Bu oyun için güvenilir bir BlueLobby manifesti bulunamadı. Otomatik .bak taraması yapılmaz.");
+                    Log("ℹBu oyun için güvenilir bir BlueLobby manifesti bulunamadı. Otomatik .bak taraması yapılmaz.");
                     return;
                 }
                 if (!manifestRead.Valid || manifestRead.Manifest == null)
                 {
-                    Log($"❌ Manifest okunamadı: {manifestRead.Error}");
+                    Log($"Manifest okunamadı: {manifestRead.Error}");
                     return;
                 }
 
@@ -876,7 +876,7 @@ namespace BlueLobby
                     var badLines = new List<string> { "Yedeklerden bazıları eksik veya bütünlüğü bozuk; geri yükleme güvenli değil:", string.Empty };
                     badLines.AddRange(backupCheck.Problems);
                     await new ConfirmDialog("Yedek doğrulama başarısız", badLines, Loc.T("yes"), string.Empty).ShowDialog<bool>(this);
-                    Log($"❌ Geri yükleme durduruldu: {backupCheck.Problems.Count} yedek sorunu var.");
+                    Log($"Geri yükleme durduruldu: {backupCheck.Problems.Count} yedek sorunu var.");
                     return;
                 }
 
@@ -904,7 +904,7 @@ namespace BlueLobby
                     if (_statusBarText != null) _statusBarText.Text = p.Message;
                 });
                 RestoreResult result = await App.Engine.RestoreGameAsync(_gameDir, manifest, restoreProgress, _operationCts.Token);
-                Log($"🔄 {result.Message}");
+                Log($"{result.Message}");
             }
             catch (Exception ex)
             {
@@ -922,11 +922,11 @@ namespace BlueLobby
         {
             if (string.IsNullOrWhiteSpace(_exePath))
             {
-                Log("❌ Başlatılacak çalıştırıcı seçilmedi.");
+                Log("Başlatılacak çalıştırıcı seçilmedi.");
                 return;
             }
 
-            Log($"🚀 Oyun başlatılıyor: {Path.GetFileName(_exePath)}");
+            Log($"Oyun başlatılıyor: {Path.GetFileName(_exePath)}");
             await App.Services.LaunchGameAsync(_exePath, _gameDir, _discoveredSteamAppId);
         }
 
@@ -939,11 +939,11 @@ namespace BlueLobby
                     FileName = App.Services.VpnDownloadUrl,
                     UseShellExecute = true
                 });
-                Log("🌐 VPN indirme sayfası açıldı.");
+                Log("VPN indirme sayfası açıldı.");
             }
             catch (Exception ex)
             {
-                Log($"⚠️ Sayfa açılamadı: {ex.Message}");
+                Log($"Sayfa açılamadı: {ex.Message}");
             }
         }
 
@@ -992,15 +992,15 @@ namespace BlueLobby
             string token = SessionProfileCodec.Encode(current);
             await CopyTextAsync(token);
 
-            await new ConfirmDialog("🔗 Profil kodu (panoya kopyalandı)",
+            await new ConfirmDialog("Profil kodu (panoya kopyalandı)",
                 new[] { "Bu kodu arkadaşına gönder; o Profil Al ile yapıştırıp aynı ayarlarla kurulum yapar." },
                 Loc.T("yes"), string.Empty).ShowDialog<bool>(this);
-            Log($"🔗 Profil kodu oluşturuldu ve panoya kopyalandı ({token.Length} karakter).");
+            Log($"Profil kodu oluşturuldu ve panoya kopyalandı ({token.Length} karakter).");
         }
 
         private async void BtnImportProfile_Click(object? sender, RoutedEventArgs e)
         {
-            var input = new InputDialog("📥 Profil Al", "Arkadaşından aldığın BL1... kodunu yapıştır");
+            var input = new InputDialog("Profil Al", "Arkadaşından aldığın BL1... kodunu yapıştır");
             bool ok = await input.ShowDialog<bool>(this);
             if (!ok || string.IsNullOrWhiteSpace(input.ResultText))
             {
@@ -1010,13 +1010,13 @@ namespace BlueLobby
             GameProfile? profile = SessionProfileCodec.Decode(input.ResultText.Trim());
             if (profile == null)
             {
-                Log("❌ Geçersiz profil kodu — kod eksik kopyalanmış olabilir, yeniden isteyin.");
-                await new ConfirmDialog("📥 Profil Al", new[] { "Bu kod geçersiz görünüyor. Lütfen kodun tamamını kopyalayıp yeniden deneyin." },
+                Log("Geçersiz profil kodu — kod eksik kopyalanmış olabilir, yeniden isteyin.");
+                await new ConfirmDialog("Profil Al", new[] { "Bu kod geçersiz görünüyor. Lütfen kodun tamamını kopyalayıp yeniden deneyin." },
                     Loc.T("yes"), string.Empty).ShowDialog<bool>(this);
                 return;
             }
 
-            var preview = new ConfirmDialog("📥 Profil uygulansın mı?",
+            var preview = new ConfirmDialog("Profil uygulansın mı?",
                 new[]
                 {
                     $"Oyuncu Adı: {profile.PlayerName}",
@@ -1034,7 +1034,7 @@ namespace BlueLobby
             }
 
             ApplyProfileToUi(profile);
-            Log($"📥 Profil uygulandı — oyuncu: {profile.PlayerName}, AppID: {profile.AppId}.");
+            Log($"Profil uygulandı — oyuncu: {profile.PlayerName}, AppID: {profile.AppId}.");
         }
 
         // ===================== Ayarlar =====================
