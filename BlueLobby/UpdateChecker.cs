@@ -24,7 +24,7 @@ namespace BlueLobby
             try
             {
                 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                http.DefaultRequestHeaders.UserAgent.ParseAdd("BlueLobby/3.1");
+                http.DefaultRequestHeaders.UserAgent.ParseAdd("BlueLobby/4.3");
                 string json = await http.GetStringAsync(ReleasesUrl);
                 using var doc = JsonDocument.Parse(json);
 
