@@ -76,7 +76,6 @@ namespace BlueLobby
                 StrokeThickness = 1.7,
                 Fill = null,
                 StrokeJoin = PenLineJoin.Round,
-                StrokeCap = PenLineCap.Round,
                 Width = size,
                 Height = size,
                 Stretch = Stretch.Uniform,
